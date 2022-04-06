@@ -11,24 +11,6 @@ coastline_cropped_Rob <- project(coastline_cropped, crsRob)
 coastline_cropped_Rob_sf <- sf::st_as_sf(coastline_cropped_Rob)
 colList <- c("#e66101","#fdae61", "#abd9e9", "#2c7bb6")
 
-# import regions to zoom in on 
-library(readxl)
-library(PROJ)
-library(data.table)
-library(ggforce)
-library(dplyr)
-library(ggplot2)
-regions <- as.data.table(read_excel("data-raw/regionInformation/regions.xlsx"))
-test_loc <- "west_coast_US"
-ext_west_coast_US <- ext(as.numeric(regions[location == test_loc,2:5]))
-xmin <- as.numeric(regions[location == test_loc,2])
-xmax <- as.numeric(regions[location == test_loc,3])
-ymin <- as.numeric(regions[location == test_loc,4])
-ymax <- as.numeric(regions[location == test_loc,5])
-xymin_rob <- as.numeric(proj_trans(cbind(xmin, ymin), target = RobinsonProj, source = "epsg:4326"))
-xymax_rob <- as.numeric(proj_trans(cbind(xmax, ymax), target = RobinsonProj, source = "epsg:4326"))
-#ext_rob <- ext(xminmax_rob, yminmax_rob)
-
 yearRange <- 19
 locOfClimFiles <- "climdata"
 
@@ -221,7 +203,7 @@ titleText <- paste0("Suitability typesfor ", i, " end 21st century, climate scen
 g <- ggplot() +
   geom_tile(data = dplyr::filter (r_suit_combined_df, !is.na(value)), aes(x, y, fill = value), show.legend = TRUE, stat = "identity", position = "identity") +
   # scale_fill_manual(labels = c("Suitability lost", "Suitability retained", "New suitable areas", "New areas, end century\n with low chill portions"), values = c("red", "yellow", "mediumseagreen", "blue"), na.value = 'white') +
-  scale_fill_manual(labels = c("Suitability lost", "Suitability retained", "New suitable areas", "New areas, end century\n with low chill portions"), values = colList, na.value = 'white') +
+  scale_fill_manual(labels = c("Suitability lost", "Suitability retained", "Newly suitable areas", "New areas, end century\n with low chill portions"), values = colList, na.value = 'white') +
   
   labs(title = titleText, fill = legendTitle, x = "", y = "", caption = caption) + 
   #   labs( x = "", y = "") +
@@ -297,77 +279,93 @@ prsect_area <- prop_section(
 )
 save_as_docx(areaTable_flex, values = NULL, path = "results/perennials_suitability.docx", pr_section = prsect_area)
 
-# inset map ------
-# not currently used
-regions_latlon <- as.data.table(read_excel("data-raw/regionInformation/regions.xlsx"))
-test_loc <- "west_coast_US"
-# get the xy coordinates for the area you want to pull out
-ext_west_coast_US <- ext(as.numeric(regions_latlon[location == test_loc,2:5]))
-xmin <- as.numeric(regions[location == test_loc,2])
-xmax <- as.numeric(regions[location == test_loc,3])
-ymin <- as.numeric(regions[location == test_loc,4])
-ymax <- as.numeric(regions[location == test_loc,5])
-# convert to Robinson projection
-xymin_rob <- as.numeric(proj_trans(cbind(xmin, ymin), target = RobinsonProj, source = "epsg:4326"))
-xymax_rob <- as.numeric(proj_trans(cbind(xmax, ymax), target = RobinsonProj, source = "epsg:4326"))
-xmin_rob <- xymin_rob[1]
-ymin_rob <- xymin_rob[2]
-xmax_rob <- xymax_rob[1]
-ymax_rob <- xymax_rob[2]
-
-# add rectngle around location to clip
-boxCoords <- data.frame(lon = c(xmin_rob, xmax_rob, xmax_rob, xmin_rob, xmin_rob), lat = c(ymin_rob, ymin_rob, ymax_rob, ymax_rob, ymin_rob))
-g_test <- g + geom_path(data = boxCoords, aes(x = lon, y = lat))
-g_small <- g + 
-  scale_x_continuous(limits = c(xmin_rob, xmax_rob)) +
-  scale_y_continuous(limits = c(ymin_rob, ymax_rob))+
-  guides(fill=FALSE) + #remove legend
-  labs(title = "") # remove title
-  
-grobin <- ggplotGrob(g_small)
-
-# where to put the grob -----
-# South Pacific
-ll_lower_left <- c(-180, -80)
-ll_lower_left_rob <- as.numeric(proj_trans(cbind(ll_lower_left[1], ll_lower_left[2]), target = RobinsonProj, source = "epsg:4326"))
-
-mag <- 8
-xmin_gr = ll_lower_left_rob[1] # - 5000000
-xmax_gr <- xmin_gr + (xmax_rob - xmin_rob) * mag
-ymin_gr = ll_lower_left_rob[2]
-ymax_gr <- ymin_gr + (ymax_rob - ymin_rob) * mag
-
-g + annotation_custom(grobin, xmin = xmin_gr, xmax =  xmax_gr, 
-                      ymin = ymin_gr, ymax = ymax_gr) +
-  geom_path(data = )
-
-# connect the dots -----
-grobPoints <- c(xmin_gr, xmax_gr, ymin_gr, ymax_gr)
-mapPoints <- c(xmin_rob, xmax_rob, ymin_rob, ymax_rob)
-
-grobPointsX <- c(xmin_gr, xmin_rob)
-grobPointsY <- c(ymin_gr, ymin_rob)
-
-pointsToConnect_ll <- as.data.frame(cbind(grobPointsX, grobPointsY))
-
-g + annotation_custom(grobin, xmin = xmin_gr, xmax =  xmax_gr, 
-                      ymin = ymin_gr, ymax = ymax_gr) +
-  geom_path(data = pointsToConnect_ll, aes(x = grobPointsX,
-                                      y = grobPointsY))
-# source: https://geocompr.github.io/post/2019/ggplot2-inset-maps/
-library(cowplot)
-library(rcartocolor)
-pointsToConnect_ll <- as.data.frame(c(0))
-gg_inset_map1 = ggdraw() +
-  draw_plot(g) +
-  draw_plot(grobin, x = 0.0, y = 0.32, width = 0.2, height = 0.2) +
-  draw_line(x = c(0,0.2), y = c(0.1, 0.3))
-                                           
-
-#source: https://stackoverflow.com/questions/57153428/r-plot-color-combinations-that-are-colorblind-accessible
-colorBlindGrey8   <- c("#999999", "#E69F00", "#56B4E9", "#009E73", 
-                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-scales::show_col(colorBlindGrey8)
+# # inset map ------
+# # not currently used
+# # import regions to zoom in on 
+# library(readxl)
+# library(PROJ)
+# library(data.table)
+# library(ggforce)
+# library(dplyr)
+# library(ggplot2)
+# regions <- as.data.table(read_excel("data-raw/regionInformation/regions.xlsx"))
+# test_loc <- "west_coast_US"
+# ext_west_coast_US <- ext(as.numeric(regions[location == test_loc,2:5]))
+# xmin <- as.numeric(regions[location == test_loc,2])
+# xmax <- as.numeric(regions[location == test_loc,3])
+# ymin <- as.numeric(regions[location == test_loc,4])
+# ymax <- as.numeric(regions[location == test_loc,5])
+# xymin_rob <- as.numeric(proj_trans(cbind(xmin, ymin), target = RobinsonProj, source = "epsg:4326"))
+# xymax_rob <- as.numeric(proj_trans(cbind(xmax, ymax), target = RobinsonProj, source = "epsg:4326"))
+# regions_latlon <- as.data.table(read_excel("data-raw/regionInformation/regions.xlsx"))
+# test_loc <- "west_coast_US"
+# # get the xy coordinates for the area you want to pull out
+# ext_west_coast_US <- ext(as.numeric(regions_latlon[location == test_loc,2:5]))
+# xmin <- as.numeric(regions[location == test_loc,2])
+# xmax <- as.numeric(regions[location == test_loc,3])
+# ymin <- as.numeric(regions[location == test_loc,4])
+# ymax <- as.numeric(regions[location == test_loc,5])
+# # convert to Robinson projection
+# xymin_rob <- as.numeric(proj_trans(cbind(xmin, ymin), target = RobinsonProj, source = "epsg:4326"))
+# xymax_rob <- as.numeric(proj_trans(cbind(xmax, ymax), target = RobinsonProj, source = "epsg:4326"))
+# xmin_rob <- xymin_rob[1]
+# ymin_rob <- xymin_rob[2]
+# xmax_rob <- xymax_rob[1]
+# ymax_rob <- xymax_rob[2]
+# 
+# # add rectngle around location to clip
+# boxCoords <- data.frame(lon = c(xmin_rob, xmax_rob, xmax_rob, xmin_rob, xmin_rob), lat = c(ymin_rob, ymin_rob, ymax_rob, ymax_rob, ymin_rob))
+# g_test <- g + geom_path(data = boxCoords, aes(x = lon, y = lat))
+# g_small <- g + 
+#   scale_x_continuous(limits = c(xmin_rob, xmax_rob)) +
+#   scale_y_continuous(limits = c(ymin_rob, ymax_rob))+
+#   guides(fill=FALSE) + #remove legend
+#   labs(title = "") # remove title
+#   
+# grobin <- ggplotGrob(g_small)
+# 
+# # where to put the grob -----
+# # South Pacific
+# ll_lower_left <- c(-180, -80)
+# ll_lower_left_rob <- as.numeric(proj_trans(cbind(ll_lower_left[1], ll_lower_left[2]), target = RobinsonProj, source = "epsg:4326"))
+# 
+# mag <- 8
+# xmin_gr = ll_lower_left_rob[1] # - 5000000
+# xmax_gr <- xmin_gr + (xmax_rob - xmin_rob) * mag
+# ymin_gr = ll_lower_left_rob[2]
+# ymax_gr <- ymin_gr + (ymax_rob - ymin_rob) * mag
+# 
+# g + annotation_custom(grobin, xmin = xmin_gr, xmax =  xmax_gr, 
+#                       ymin = ymin_gr, ymax = ymax_gr) +
+#   geom_path(data = )
+# 
+# # connect the dots -----
+# grobPoints <- c(xmin_gr, xmax_gr, ymin_gr, ymax_gr)
+# mapPoints <- c(xmin_rob, xmax_rob, ymin_rob, ymax_rob)
+# 
+# grobPointsX <- c(xmin_gr, xmin_rob)
+# grobPointsY <- c(ymin_gr, ymin_rob)
+# 
+# pointsToConnect_ll <- as.data.frame(cbind(grobPointsX, grobPointsY))
+# 
+# g + annotation_custom(grobin, xmin = xmin_gr, xmax =  xmax_gr, 
+#                       ymin = ymin_gr, ymax = ymax_gr) +
+#   geom_path(data = pointsToConnect_ll, aes(x = grobPointsX,
+#                                       y = grobPointsY))
+# # source: https://geocompr.github.io/post/2019/ggplot2-inset-maps/
+# library(cowplot)
+# library(rcartocolor)
+# pointsToConnect_ll <- as.data.frame(c(0))
+# gg_inset_map1 = ggdraw() +
+#   draw_plot(g) +
+#   draw_plot(grobin, x = 0.0, y = 0.32, width = 0.2, height = 0.2) +
+#   draw_line(x = c(0,0.2), y = c(0.1, 0.3))
+#                                            
+# 
+# #source: https://stackoverflow.com/questions/57153428/r-plot-color-combinations-that-are-colorblind-accessible
+# colorBlindGrey8   <- c("#999999", "#E69F00", "#56B4E9", "#009E73", 
+#                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+# scales::show_col(colorBlindGrey8)
 
 # alternate source
 #https://colorbrewer2.org/#type=diverging&scheme=RdYlBu&n=4
