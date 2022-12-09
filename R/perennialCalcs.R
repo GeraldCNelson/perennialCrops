@@ -1,747 +1,232 @@
 # code to do various perennial crop calculations
-# varietiesChoiceSuffix <- "_main" # whether to use lo, main, or hi cp values. Needs to be before the sourcing code next. Moved to perennialFunctions.R
+
+speciesChoices <- c("almond_main", "apple_main",  "cherry_main", "olive_main",  "grape_main")
+speciesNames <- gsub("_main", "", speciesChoices)
+chillLevels <- c("_lo", "_main")
 source("R/perennialFunctions.R")
+source("R/perennialsPrep.R")
+suitabilityLevel <- "good"
+# the code in {} below runs all the raw data crunching - extreme cold, heat, frost, GDDs - except CPs which is done in ; the code below that does aggregation - means by model and ensemble means. Don't run these unless the files need to be updated and you have some time to kill
 
-# extreme cold calcs, scenarios -----
-for (k in sspChoices) {
-  for (l in startYearChoices) {
-    for (hem in hemispheres) {
-      for (speciesChoice in speciesChoices) {
-        f_extremeCold(k, l, speciesChoice, hem, varietiesChoiceSuffix)
-      }
-    }
-  }
-}
+# Note: that the difference between _lo and _main is just in the chill portions for the crops
 
-# extreme cold calcs, historical -----
-k <- "historical"
-l <- 1991
-for (hem in hemispheres) {
-  for (speciesChoice in speciesChoices){
-    f_extremeCold(k, l, speciesChoice, hem, varietiesChoiceSuffix)
-  }
-}
-
-# heat damage, historical -----
-k <- "historical"
-l <- 1991
-for (hem in hemispheres) {
-  for (speciesChoice in speciesChoices) {
-    f_heatDamage(k, l, speciesChoice, hem, varietiesChoice, suitabilityLevel)
-  }
-}
-
-# heat damage, scenarios -----
-for (k in sspChoices) {
-  for (l in startYearChoices) {
-    for (hem in hemispheres) {
-      for (speciesChoice in speciesChoices) {
-        f_heatDamage(k, l, speciesChoice, hem, varietiesChoice, suitabilityLevel)
-      }
-    }
-  }
-}
-
-# frost damage, scenarios -----
-for (k in sspChoices) {
-  for (l in startYearChoices) {
-    for (hem in hemispheres) {
-      for (speciesChoice in speciesChoices) {
-        f_frostDamage(k, l, speciesChoice, hem, varietiesChoice, suitabilityLevel)
-      }
-    }
-  }
-}
-
-# frost damage, historical -----
-k <- "historical"
-l <- 1991
-for (hem in hemispheres) {
-  for (speciesChoice in speciesChoices) {
-    f_frostDamage(k, l, speciesChoice, hem, varietiesChoice, suitabilityLevel)
-  }
-}
-# 
-# # gdd calcs ----
-# gddFilesCompleted <- list.files(locOfgddsFiles,  full.names = TRUE)
-# gddFilesCompleted <- gddFilesCompleted[!grepl("aux.xml", gddFilesCompleted, fixed = TRUE)]
-# gddFilesCompleted <- gsub("//", "/", gddFilesCompleted)
-# gddFilesCompleted <- NULL # temporary to make sure everything is redone
-# gdds, historical -----
-k <- "historical"
-l <- 1991
-for (modelChoice in modelChoices) {
+{
+  # extreme cold calcs -----
+  #scenarios
+  cropVals <- get(paste0("majorCropValues", "_main"))
   for (hem in hemispheres) {
-    print(system.time(f_computeGDDs(k, l, modelChoice, cropVals)))
+    for (speciesName in speciesNames) {
+      for (k in sspChoices) {
+        for (l in startYearChoices) {
+          f_extremeCold(k, l, speciesName, hem, modelChoices_lower, cropVals)
+        }
+      }
+    
+    #historical -----
+    k <- "historical"
+    l <- 1991
+    f_extremeCold(k, l, speciesName, hem, modelChoices_lower, cropVals)
+    }
   }
-}
-
-# gdds, scenarios -----
-for (k in sspChoices) {
-  for (l in startYearChoices) {
+  
+  # heat damage  -----
+  # scenarios
+  cropVals <- get(paste0("majorCropValues", "_main"))
+  for (hem in hemispheres) {
+    for (speciesName in speciesNames) {
+      for (k in sspChoices) {
+        for (l in startYearChoices) {
+          f_heatDamage(k, l, speciesName, hem, suitabilityLevel, cropVals)
+        }
+      }
+      #historical
+      k <- "historical"
+      l <- 1991
+      f_heatDamage(k, l, speciesName, hem, suitabilityLevel, cropVals)
+    }
+  }
+  
+  # frost damage -----
+  #scenarios
+  for (hem in hemispheres) {
+    for (speciesName in speciesNames) {
+      for (k in sspChoices) {
+        for (l in startYearChoices) {
+          f_frostDamage(k, l, speciesName, hem, suitabilityLevel, cropVals)
+        }
+      }
+    }
+    #historical
+    k <- "historical"
+    l <- 1991
+    f_frostDamage(k, l, speciesName, hem, suitabilityLevel, cropVals)
+  }
+  
+  # gdd calcs ------
+  # note that gdds don't change on the basis of species chill portions, so generate just with file names
+  #scenarios
+  for (speciesName in speciesNames) {
+    speciesChoice <- paste0(speciesName, "_main") # needed to get a cropVals variable with the gdds, _lo would also work as well
+    cropVals <- get(paste0("majorCropValues", "_main"))
+    topt_min <- cropVals[cropName == speciesChoice, gddtb]
+    topt_max <- cropVals[cropName == speciesChoice, GDD_opt]
     for (modelChoice in modelChoices) {
-      for (hem in hemispheres) {
-        f_computeGDDs(k, l, modelChoice, cropVals) 
+      for (k in sspChoices) {
+        for (l in startYearChoices) {
+          print(system.time(f_computeGDDs(k, l, speciesName, modelChoice, topt_min, topt_max)))
+        }
       }
+      
+      # historical
+      k <- "historical"
+      l <- 1991
+      print(system.time(f_computeGDDs(k, l, speciesName, modelChoice, topt_min, topt_max)))
     }
   }
 }
-# just almond and winegrapes here because the gdds are the same for them and the other crops. this is true for both main and lo chill portions varieties
-# gdd sums, historical ------
-k <- "historical"
-l <- 1991
-for (speciesChoice in c(paste0("almond", varietiesChoiceSuffix), paste0("winegrape", varietiesChoiceSuffix))) {
-  for (hem in hemispheres) {
-    f_gddSums(k, l, speciesChoice, hem, runsParms)
+# runs files -----
+# runsParms created in perennialFunctions.R
+#scenarios
+for (k in sspChoices) {
+  for (l in startYearChoices) {
+    f_runsSetup(k, l, runsParms)
+  }
+}
+#historical
+k = "historical"
+l = 1991
+f_runsSetup(k, l, runsParms)
+
+# gdd sums  ------ this takes forever becuase it works year by year.
+#scenarios
+for (speciesName in speciesNames) {
+  for (modelChoice in modelChoices) {
+    for (hem in hemispheres) {
+      for (k in sspChoices) {
+        for (l in startYearChoices) {
+          f_gddSums(k, l, speciesName, hem, runsParms, modelChoice)
+        }
+      }
+      #historical
+      k <- "historical"
+      l <- 1991
+      f_gddSums(k, l, speciesName, hem, runsParms, modelChoice)
+    }
   }
 }
 
-# gdd sums, scenarios ------
-for (speciesChoice in c(paste0("almond", varietiesChoiceSuffix), paste0("winegrape", varietiesChoiceSuffix))) { #
+# aggregation code -----
+# runs only used in GDD calcs so no need to do means
+{
+  # GDD sum, means by model -----
+  #  scenarios
+  cropVals <- get(paste0("majorCropValues", "_main"))
   for (k in sspChoices) {
     for (l in startYearChoices) {
-      for (hem in hemispheres) {
-        f_gddSums(k, l, speciesChoice, hem, runsParms)
-      }
+      f_gddSum_mean(k, l, speciesNames, modelChoices, hemispheres)
     }
   }
-}
-
-# added because almond, apple, and cherry have the same gdd requirements and winegrape and olive also have the same
-# first get all the gdd file names and pull out just the ones for almond and winegrape
-gddFilesCompleted <- list.files(locOfgddsFiles,  full.names = TRUE)
-gddFilesCompleted <- gddFilesCompleted[!grepl("aux.xml", gddFilesCompleted, fixed = TRUE)]
-gddFilesCompleted <- gsub("//", "/", gddFilesCompleted)
-gddSumFilesCompleted <- gddFilesCompleted[!grepl("gddSum_mean_", gddFilesCompleted, fixed = TRUE)]
-gddSumFilesCompleted <- gddSumFilesCompleted[!grepl("ensemble_", gddSumFilesCompleted, fixed = TRUE)]
-gddSumFilesCompleted <- gddSumFilesCompleted[grepl("gddSum_", gddSumFilesCompleted, fixed = TRUE)]
-
-gddFiles_almond <- gddSumFilesCompleted[grepl("almond", gddSumFilesCompleted, fixed = TRUE)]
-gddFiles_winegrape <- gddSumFilesCompleted[grepl("winegrape", gddSumFilesCompleted, fixed = TRUE)]
-
-# because the gdds are the same for main and lo, the next bit of code just creates a new  filename and copies the main to the new
-
-for (i in gddFiles_almond) {
-  gdd_cherry <- gsub("almond", "cherry", i)
+  #historical -----
+  k <- "historical"
+  l <- 1991
+  f_gddSum_mean(k, l, speciesNames, modelChoices, hemispheres)
   
-  file.copy(from = i, to = gdd_cherry, overwrite = TRUE, copy.mode = TRUE, copy.date = TRUE)
-  gdd_apple <- gsub("almond", "apple", i)
-  file.copy(from = i, to = gdd_apple, overwrite = TRUE, copy.mode = TRUE, copy.date = TRUE)
-  print(gdd_cherry)
-  print(i)
-  al <- rast(i)
-  plot(al, 1)
-  al <- rast(gdd_cherry)
-  plot(al, 1)
   
-}
-for (i in gddFiles_winegrape) {
-  gdd_olive <- gsub("winegrape", "olive", i)
-  file.copy(from = i, to = gdd_olive, overwrite = TRUE, copy.mode = TRUE, copy.date = TRUE)
-}
-
-for ( i in gddSumFilesCompleted) {
-  i_lo <- gsub("_main", "_lo", i) 
-  file.copy(from = i, to = i_lo, overwrite = TRUE, copy.mode = TRUE)
-}
-
-# GDD sum, means by model, historical -----
-k <- "historical"
-l <- 1991
-f_gddSum_mean(k, l, speciesChoices, modelChoices, hemispheres)
-
-# GDD sum, means by model, scenarios -----
-for (k in sspChoices) {
-  for (l in startYearChoices) {
-    f_gddSum_mean(k, l, speciesChoices, modelChoices, hemispheres)
-  }
-}
-
-# ensemble GDD sum, historical -----
-k <- "historical"
-l <- 1991
-f_ensemble_GDD_sum_mean(k, l, yearRange, speciesChoices, cropVals)
-
-# ensemble GDD sum, scenarios -----
-for (k in sspChoices) {
-  for (l in startYearChoices) {
-    yearSpan <- paste0(l, "_", l + yearRange)
-    f_ensemble_GDD_sum_mean(k, l, yearRange, speciesChoices, cropVals)
-  }
-}
-
-# gdds suitable, scenarios -----
-for (k in sspChoices) {
-  for (l in startYearChoices) {
-    for (hem in hemispheres) {
-      for (speciesChoice in speciesChoices) {
-        print(paste0("speciesChoice: ", speciesChoice, ", ssp choice: ", k, ", start year: ", l))
-        f_gddsSuitability(k, l, speciesChoice, hem) 
-      }
+  # ensemble GDD sum -----
+  #scenarios 
+  for (k in sspChoices) {
+    for (l in startYearChoices) {
+      yearSpan <- paste0(l, "_", l + yearRange)
+      f_ensemble_GDD_sum_mean(k, l, yearRange, speciesNames, cropVals)
     }
   }
+  #historical
+  k <- "historical"
+  l <- 1991
+  f_ensemble_GDD_sum_mean(k, l, yearRange, speciesNames, cropVals)
 }
 
-# gdds suitable, historical -----
-k <- "historical"
-l <- 1991
+# gdds suitable-----
+
 for (hem in hemispheres) {
-  for (speciesChoice in speciesChoices) {
-    print(paste0("speciesChoice: ", speciesChoice, ", ssp choice: ", k, ", start year: ", l))
-    f_gddsSuitability(k, l, speciesChoice, hem) 
+  for (speciesName in speciesNames) {
+    #scenarios
+    for (k in sspChoices) {
+      for (l in startYearChoices) {
+        print(paste0("speciesName: ", speciesName, ", ssp choice: ", k, ", start year: ", l))
+        f_gddsSuitability(k, l, speciesName, hem, cropVals) 
+      }
+    }
+    #historical
+    k <- "historical"
+    l <- 1991
+    print(paste0("speciesName: ", speciesName, ", ssp choice: ", k, ", start year: ", l))
+    f_gddsSuitability(k, l, speciesName, hem, cropVals) 
   }
 }
 
 # combined damage, scenarios -----
 # code to read in 1/0 metrics files and produce 1/0 tifs where the crop is potentially growable. The chill portions files are created in the chillPortions.R script
-# combined damage, historical -----
-k <- "historical"
-l <- 1991
-for (speciesChoice in speciesChoices) {
-  print(paste0("speciesChoice: ", speciesChoice, ", ssp choice: ", k, ", start year: ", l))
-  f_combinedDamage(k, l, speciesChoice, suitabilityLevel) 
-} 
-
-for (k in sspChoices) {
-  for (l in startYearChoices) {
-    for (speciesChoice in speciesChoices) {
-      print(paste0("speciesChoice: ", speciesChoice, ", ssp choice: ", k, ", start year: ", l))
-      f_combinedDamage(k, l, speciesChoice, suitabilityLevel) 
-    }
-  }
-}
-
-# area calculations -----
+#Important note: The chillPortions.R script must be run before combined damage whenever any chill portion value is changed.
 {
-  dt_area <- data.table(species = character(), cultivar = character(), chillPortions= numeric(), hemisphere = character(), ssp = character(), yearSpan = character(), quality = character(), area_suitable = numeric(), rasterName = character())
-  suitabilityLevels <- "good"
-  for (k in sspChoices) {
-    for (l in startYearChoices) {
-      yearSpan <- paste0(l, "_", l + yearRange)
-      for (speciesChoice in speciesChoices) {
-        CPfruit <- cropVals[cropName == speciesChoice, chill_portions]
-        cultivar <-  cropVals[cropName == speciesChoice, cultivar]
-        
-        for (hem in hemispheres) {
-          for (suitabilityLevel in suitabilityLevels) {
-            fileName_in <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_", k, "_", suitabilityLevel, "_", hem, "_", yearSpan, ".tif")
-            rastName <- paste0("suitable_", speciesChoice, "_", hem, "_", k, "_", suitabilityLevel, "_", yearSpan)
-            r <- rast(fileName_in)
-            # r has all 5 suitability layers, get just the combined one
-            r_combSuit <- r$combinedSuit
-            r_combSuit[r_combSuit == 0] <- NA # only want to get area of cells that have a value of 1; ie, suitable
-            r_area <- expanse(r_combSuit, unit = "km")
-            print(r_area)
-            dt_area <- rbind(dt_area, list(speciesChoice, cultivar, CPfruit, hem, k, yearSpan, suitabilityLevel, r_area, rastName))
-          }
+  # combined damage -----
+  for (chillLevel in chillLevels) {
+    for (speciesName in speciesNames) {
+      speciesName <- f_speciesName(speciesName)
+      for (k in sspChoices) {
+        for (l in startYearChoices) {
+          print(paste0("speciesName: ", speciesName, ", chilllevel: ", chillLevel,  ", ssp choice: ", k, ", start year: ", l))
+          f_combinedDamage(k, l, speciesName, suitabilityLevel, chillLevel) 
         }
       }
-    }
-  }
-  
-  k <- "historical"
-  l <- 1991
-  yearSpan <- paste0(l, "_", l + yearRange)
-  for (speciesChoice in speciesChoices) {
-    CPfruit <- cropVals[cropName == speciesChoice, chill_portions]
-    cultivar <-  cropVals[cropName == speciesChoice, cultivar]
-    for (hem in hemispheres) {
-      for (suitabilityLevel in suitabilityLevels) {
-        fileName_in <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_", k, "_", suitabilityLevel, "_", hem, "_", yearSpan, ".tif")
-        r <- rast(fileName_in) 
-        # r has all 5 suitability layers, get just the combined one
-        r_combinedSuit <- r$combinedSuit
-        r_combinedSuit[r_combinedSuit == 0] <- NA # only want to get area of cells that have a value of 1; ie, suitable
-        r_area <- expanse(r_combinedSuit, unit = "km")
-        dt_area <- rbind(dt_area, list(speciesChoice, cultivar, CPfruit, hem, k, yearSpan, suitabilityLevel, r_area, rastName))
-      }
-    }
-  }
-  fileName_out <- paste0(locOfDataFiles_perennials, "areaCalcs", varietiesChoiceSuffix, ".csv")
-  write.csv(dt_area, file = fileName_out, row.names = FALSE)
-  print(paste0("fileName out: ", fileName_out))
-}
-
-# area deltas, need to run code above first -----
-dt_area_delta <- data.table(species = character(), cultivar = character(), chillPortions= numeric(), hemisphere = character(), ssp_base = character(), ssp = character(), yearSpan = character(), quality = character(), area_base = numeric(), area_delta = numeric(), delta_share = numeric())
-for (speciesChoice in speciesChoices) {
-  CPfruit <- cropVals[cropName == speciesChoice, chill_portions]
-  cultivar <-  cropVals[cropName == speciesChoice, cultivar]
-  for (hem in hemispheres) {
-    for (suitabilityLevel in suitabilityLevels) {
-      r_historical <- rast(paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_", "historical", "_", suitabilityLevel, "_", hem, "_", "1991_2010.tif"))
-      r_historical[r_historical == 0] <- NA
-      area_base <- expanse(r_historical, unit = "km")
-      for (l in startYearChoices) {
-        yearSpan <- paste0(l, "_", l + yearRange)
-        for (k in sspChoices) {
-          rastName <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_",  k, "_", suitabilityLevel, "_", hem, "_", yearSpan, ".tif")
-          r_delta <- rast(rastName) - r_historical
-          r_delta[r_delta == 0] <- NA
-          r_delta_area <- expanse(r_delta, unit = "km")
-          delta_ratio <- 100 * r_delta_area/area_base # added 100 * here to convert to percent November 9, 2021
-          dt_area_delta <- rbind(dt_area_delta, list(speciesChoice, cultivar, CPfruit, hem, "historical", k, yearSpan, suitabilityLevel, area_base, r_delta_area, delta_ratio))
-        }
-      }
-    }
+      #historical
+      k <- "historical"
+      l <- 1991
+      print(paste0("speciesName: ", speciesName, ", chilllevel: ", chillLevel,  ", ssp choice: ", k, ", start year: ", l))
+      f_combinedDamage(k, l, speciesName, suitabilityLevel, chillLevel) 
+    } 
   }
 }
-
-fileName_out <- paste0(locOfDataFiles_perennials, "areaCalcs_delta", varietiesChoiceSuffix, ".csv")
-write.csv(dt_area_delta, file = fileName_out, row.names = FALSE)
-print(paste0("fileName out: ", fileName_out))
-
-# harvest and suitability area calcs ------
-# area common to mid and end century -----
-dt_area_common_mid <- data.table(species = character(), cultivar = character(), chillPortions= numeric(), ssp = character(), hemisphere = character(), yearSpan = character(), area_common = numeric())
-dt_area_common_end <- data.table(species = character(), cultivar = character(), chillPortions= numeric(), ssp = character(), hemisphere = character(), yearSpan = character(), area_common = numeric())
-
-for (speciesChoice in speciesChoices) {
-  CPfruit <- cropVals[cropName == speciesChoice, chill_portions]
-  cultivar <-  cropVals[cropName == speciesChoice, cultivar]
-  speciesName <- gsub(varietiesChoiceSuffix, "", speciesChoice) # needed for the harvested area data
-  # the harvested area data is just for grapes so need to get rid of wine in the names
-  if (speciesChoice == paste0("winegrape", varietiesChoiceSuffix)) speciesName <- "grape"
-  fileName_in <- paste0(locOfHarvestDataFiles, speciesName,"/",  speciesName, "_HarvestedAreaHectares.tif")
-  rInArea <- rast(fileName_in)
-  harvestArea_earlyCent <- aggregate(rInArea, fact = 6, fun = "sum") # convert 5 arc minutes to 1/2 degrees
-  # crop to no Antarctica
-  harvestArea_earlyCent <- crop(harvestArea_earlyCent, extent_noAntarctica)
-  # mask to land only
-  harvestArea_earlyCent <- mask(harvestArea_earlyCent, landOnlyMaskNoAntarctica, maskvalues = 0)
-  maskMin <- switch(
-    speciesName,
-    "almond" = 10,
-    "apple" = 10,
-    "cherry" = 10,
-    "grape" = 10,
-    "olive" = 10
-  )
-  #  harvestArea_earlyCent[harvestArea_earlyCent < maskMin] <- NA # set minimum area to be greater than maxmin hectares per grid cell
-  harvestArea_earlyCent[harvestArea_earlyCent < maskMin] <- 0 # set minimum area to be greater than maxmin hectares per grid cell
-  harvestArea_earlyCent[harvestArea_earlyCent > 0] <- 1
-  harvestArea_earlyCent_NH <- crop(harvestArea_earlyCent, extent_NH)
-  harvestArea_earlyCent_SH <- crop(harvestArea_earlyCent, extent_SH)
-  
-  #suitable areas -----
-  # suitable area end century
-  fileName_in_ssp126_SH_end <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_", "ssp126", "_", suitabilityLevel, "_", "SH", "_", "2081_2100", ".tif")
-  fileName_in_ssp126_NH_end <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_", "ssp126", "_", suitabilityLevel, "_", "NH", "_", "2081_2100", ".tif")
-  fileName_in_ssp585_SH_end <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_", "ssp585", "_", suitabilityLevel, "_", "SH", "_", "2081_2100", ".tif")
-  fileName_in_ssp585_NH_end <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_", "ssp585", "_", suitabilityLevel, "_", "NH", "_", "2081_2100", ".tif")
-  
-  suitableArea_ssp126_SH_end <- rast(fileName_in_ssp126_SH_end)
-  suitableArea_ssp126_NH_end <- rast(fileName_in_ssp126_NH_end)
-  suitableArea_ssp585_SH_end <- rast(fileName_in_ssp585_SH_end)
-  suitableArea_ssp585_NH_end <- rast(fileName_in_ssp585_NH_end)
-  
-  # suitable area mid century
-  fileName_in_ssp126_SH_mid <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_", "ssp126", "_", suitabilityLevel, "_", "SH", "_", "2041_2060", ".tif")
-  fileName_in_ssp126_NH_mid <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_", "ssp126", "_", suitabilityLevel, "_", "NH", "_", "2041_2060", ".tif")
-  fileName_in_ssp585_SH_mid <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_", "ssp585", "_", suitabilityLevel, "_", "SH", "_", "2041_2060", ".tif")
-  fileName_in_ssp585_NH_mid <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_", "ssp585", "_", suitabilityLevel, "_", "NH", "_", "2041_2060", ".tif")
-  
-  suitableArea_ssp126_SH_mid <- rast(fileName_in_ssp126_SH_mid)
-  suitableArea_ssp126_NH_mid <- rast(fileName_in_ssp126_NH_mid)
-  suitableArea_ssp585_SH_mid <- rast(fileName_in_ssp585_SH_mid)
-  suitableArea_ssp585_NH_mid <- rast(fileName_in_ssp585_NH_mid)
-  
-  # get just the overall suitability
-  suitableArea_ssp126_SH_mid <- suitableArea_ssp126_SH_mid$combinedSuit
-  suitableArea_ssp126_NH_mid <- suitableArea_ssp126_NH_mid$combinedSuit
-  suitableArea_ssp585_SH_mid <- suitableArea_ssp585_SH_mid$combinedSuit
-  suitableArea_ssp585_NH_mid <- suitableArea_ssp585_NH_mid$combinedSuit
-  
-  suitableArea_ssp126_SH_end <- suitableArea_ssp126_SH_end$combinedSuit
-  suitableArea_ssp126_NH_end <- suitableArea_ssp126_NH_end$combinedSuit
-  suitableArea_ssp585_SH_end <- suitableArea_ssp585_SH_end$combinedSuit
-  suitableArea_ssp585_NH_end <- suitableArea_ssp585_NH_end$combinedSuit
-  
-  #combined
-  suitableArea_ssp126_mid <- merge(suitableArea_ssp126_SH_mid, suitableArea_ssp126_NH_mid)
-  suitableArea_ssp585_mid <- merge(suitableArea_ssp585_SH_mid, suitableArea_ssp585_NH_mid)
-  
-  suitableArea_ssp126_end <- merge(suitableArea_ssp126_SH_end, suitableArea_ssp126_NH_end)
-  suitableArea_ssp585_end <- merge(suitableArea_ssp585_SH_end, suitableArea_ssp585_NH_end)
-  
-  r_combined_ssp126_mid <- c(harvestArea_earlyCent, suitableArea_ssp126_mid)
-  r_combined_ssp585_mid <- c(harvestArea_earlyCent, suitableArea_ssp585_mid)
-  
-  commonArea_ssp126_NH_mid <- suitableArea_ssp126_NH_mid * harvestArea_earlyCent_NH # changed to * June 9, 2021
-  commonArea_ssp126_SH_mid <- suitableArea_ssp126_SH_mid * harvestArea_earlyCent_SH
-  commonArea_ssp585_NH_mid <- suitableArea_ssp585_NH_mid * harvestArea_earlyCent_NH # changed to * June 9, 2021
-  commonArea_ssp585_SH_mid <- suitableArea_ssp585_SH_mid * harvestArea_earlyCent_SH
-  commonArea_ssp126_NH_mid[commonArea_ssp126_NH_mid == 0] <- NA
-  commonArea_ssp126_SH_mid[commonArea_ssp126_SH_mid == 0] <- NA
-  commonArea_ssp585_NH_mid[commonArea_ssp585_NH_mid == 0] <- NA
-  commonArea_ssp585_SH_mid[commonArea_ssp585_SH_mid == 0] <- NA
-  
-  commonArea_ssp126_NH_end <- suitableArea_ssp126_NH_end * harvestArea_earlyCent_NH # changed to * June 9, 2021
-  commonArea_ssp126_SH_end <- suitableArea_ssp126_SH_end * harvestArea_earlyCent_SH
-  commonArea_ssp585_NH_end <- suitableArea_ssp585_NH_end * harvestArea_earlyCent_NH # changed to * June 9, 2021
-  commonArea_ssp585_SH_end <- suitableArea_ssp585_SH_end * harvestArea_earlyCent_SH
-  commonArea_ssp126_NH_end[commonArea_ssp126_NH_end == 0] <- NA
-  commonArea_ssp126_SH_end[commonArea_ssp126_SH_end == 0] <- NA
-  commonArea_ssp585_NH_end[commonArea_ssp585_NH_end == 0] <- NA
-  commonArea_ssp585_SH_end[commonArea_ssp585_SH_end == 0] <- NA
-  
-  
-  cellSize(commonArea_ssp126_NH_mid, mask=TRUE, unit="km")
-  cellSize(commonArea_ssp126_SH_mid, mask=TRUE, unit="km")
-  cellSize(commonArea_ssp585_NH_mid, mask=TRUE, unit="km")
-  cellSize(commonArea_ssp585_SH_mid, mask=TRUE, unit="km")
-  
-  cellSize(commonArea_ssp126_NH_end, mask=TRUE, unit="km")
-  cellSize(commonArea_ssp126_SH_end, mask=TRUE, unit="km")
-  cellSize(commonArea_ssp585_NH_end, mask=TRUE, unit="km")
-  cellSize(commonArea_ssp585_SH_end, mask=TRUE, unit="km")
-  
-  dt_area_common_mid <- rbind(dt_area_common_mid, list(speciesChoice, cultivar, CPfruit, "ssp126", "NH", "2041_2060", expanse(commonArea_ssp126_NH_mid, unit = "km")))
-  dt_area_common_mid <- rbind(dt_area_common_mid, list(speciesChoice, cultivar, CPfruit, "ssp126", "SH", "2041_2060", expanse(commonArea_ssp126_SH_mid, unit = "km")))
-  dt_area_common_mid <- rbind(dt_area_common_mid, list(speciesChoice, cultivar, CPfruit, "ssp585", "NH", "2041_2060", expanse(commonArea_ssp585_NH_mid, unit = "km")))
-  dt_area_common_mid <- rbind(dt_area_common_mid, list(speciesChoice, cultivar, CPfruit, "ssp585", "SH", "2041_2060", expanse(commonArea_ssp585_SH_mid, unit = "km")))
-  
-  dt_area_common_end <- rbind(dt_area_common_end, list(speciesChoice, cultivar, CPfruit, "ssp126", "NH", "2081_2100", expanse(commonArea_ssp126_NH_end, unit = "km")))
-  dt_area_common_end <- rbind(dt_area_common_end, list(speciesChoice, cultivar, CPfruit, "ssp126", "SH", "2081_2100", expanse(commonArea_ssp126_SH_end, unit = "km")))
-  dt_area_common_end <- rbind(dt_area_common_end, list(speciesChoice, cultivar, CPfruit, "ssp585", "NH", "2081_2100", expanse(commonArea_ssp585_NH_end, unit = "km")))
-  dt_area_common_end <- rbind(dt_area_common_end, list(speciesChoice, cultivar, CPfruit, "ssp585", "SH", "2081_2100", expanse(commonArea_ssp585_SH_end, unit = "km")))
-} 
-
-dt_area_common <- rbind(dt_area_common_mid, dt_area_common_end)
-dt_area_common[, ssp_year := paste0(ssp, "_", yearSpan)]
-dt_area_common[, yearSpan := NULL]
-# fileName_out <- paste0(locOfDataFiles_perennials, "areaCalcs_common", "_", k, varietiesChoiceSuffix, ".csv")
-# write.csv(dt_area_common, file = fileName_out, row.names = FALSE)
-# print(paste0("fileName out: ", fileName_out))
-
-# create table of area changes ------
-dt_area <- as.data.table(read.csv(file = paste0(locOfDataFiles_perennials, "areaCalcs", varietiesChoiceSuffix, ".csv")))
-
-# delete rows that are for suitability bad or acceptable and mid century - keeping just early and mid century. And mid century, Oct 28
-#dt_area <- dt_area[!quality %in% c("bad", "acceptable") & !yearSpan %in% "2041_2060",]
-dt_area <- dt_area[!quality %in% c("bad", "acceptable") ,]
-dt_area[,ssp_year := paste0(ssp, "_", yearSpan)]
-dt_area[, c("quality", "rasterName", "ssp", "yearSpan") := NULL]
-dt_area_wide <-        dcast(dt_area,        species + cultivar + chillPortions + hemisphere ~ ssp_year, value.var = "area_suitable")
-dt_area_common_wide <- dcast(dt_area_common, species + cultivar + chillPortions + hemisphere ~ ssp_year, value.var = "area_common")
-sspNames <- c("ssp126_2041_2060", "ssp126_2081_2100", "ssp585_2041_2060", "ssp585_2081_2100")
-sspNames_new = paste0(sspNames, "_common")
-setnames(dt_area_common_wide, old = sspNames, new =sspNames_new)
-# dt_area_common[, ssp := NULL]
-combined <- merge(dt_area_wide, dt_area_common_wide, all = TRUE)
-
-# convert units
-colsToConvert <- c("historical_1991_2010", sspNames, sspNames_new)
-combined[, (colsToConvert) := lapply(.SD, '/', 1000), .SDcols = (colsToConvert)] # convert to 1000 sq km
-# added 100 * below to convert to percent Nov 9, 2021
-combined[, ratiomid2Early_126 := 100 * (-1 + ssp126_2041_2060/historical_1991_2010)]
-combined[, ratiomid2Early_585 := 100 * (-1 + ssp585_2041_2060/historical_1991_2010)]
-combined[, ratioCommon2Early_126 := 100 * (ssp126_2041_2060_common/historical_1991_2010)]
-combined[, ratioCommon2Early_585 := 100 * (ssp585_2041_2060_common/historical_1991_2010)]
-combined[, ratioLossOfEarly_126 := 100 * ((historical_1991_2010 - ssp126_2041_2060)/historical_1991_2010)]
-combined[, ratioLossOfEarly_585 := 100 * ((historical_1991_2010 - ssp585_2041_2060)/historical_1991_2010)]
-ratioColumns <- c("ratiomid2Early_126", "ratiomid2Early_585", "ratioCommon2Early_126", "ratioCommon2Early_585", "ratioLossOfEarly_126", "ratioLossOfEarly_585")
-sumColumns <- c("historical_1991_2010", "ssp126_2041_2060", "ssp585_2041_2060", "ssp126_2041_2060_common", "ssp585_2041_2060_common", "ssp126_2081_2100", "ssp585_2081_2100", "ssp126_2081_2100_common", "ssp585_2081_2100_common")
-ssp126Columns <- c("ssp126_2041_2060", "ssp126_2041_2060_common", "ratiomid2Early_126", "ratioCommon2Early_126", "ratioLossOfEarly_126") 
-combined[, (ratioColumns):= round(.SD, 2), .SDcols = ratioColumns]
-combined[, (sumColumns):= round(.SD, 0), .SDcols = sumColumns]
-combined[, chillPortions := NULL] # column not needed for presentation table
-
-write.csv(combined, file = paste0(locOfDataFiles_perennials, "sumTable", varietiesChoiceSuffix, ".csv"), row.names = FALSE)
-
-# prepare summary table ------
-# main varieties -----
-library(flextable)
-library(officer)
-sumTable_main <- as.data.table(read.csv(file = paste0(locOfDataFiles_perennials, "sumTable", "_main", ".csv")))
-sumTable_main[, species := gsub("_main", "", species)]
-sumTable_main[, species := stringr::str_to_title(species)][species == "Winegrape", species := "Wine grape"]
-
-# sumTable_main[, c(ssp126Columns, "ratioCommon2Early_585", "ratioLossOfEarly_585") := NULL]
-namesOrderOrig <- names(sumTable_main)
-namesOrderNew <- c("species", "cultivar", "hemisphere", "historical_1991_2010", "ssp126_2041_2060", "ssp126_2081_2100", "ssp585_2041_2060", "ssp585_2081_2100", 
-                   "ssp126_2041_2060_common", "ssp585_2041_2060_common", 
-                   "ssp126_2081_2100_common", "ssp585_2081_2100_common", 
-                   "ratiomid2Early_126", "ratiomid2Early_585", 
-                   "ratioCommon2Early_126", "ratioCommon2Early_585", 
-                   "ratioLossOfEarly_126", "ratioLossOfEarly_585")
-setcolorder(sumTable_main, namesOrderNew)
-sumTable_main_flex <- flextable(sumTable_main)
-# sumTable_main_flex <- set_header_labels(sumTable_main_flex, values = list(
-#   species = "species", cultivar = "cultivar", hemisphere = "hemisphere", 
-#   historical = "early century area", ssp585 = "mid century area, SSP585", ssp585_common = "common area, SSP mid century and early century", ratiomid2Early_585 = "area ratio, mid spp585 to beginning"))
-typology_all <- data.frame(
-  col_keys_all = names(sumTable_main),
-  what = c("Species", "Cultivar", "Hemi-\nsphere", #3
-           "Area (sq. km)", "Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)", #9
-           "Area ratio", "Area ratio", "Area ratio", "Area ratio", "Area ratio", "Area ratio"), #15
-  measure = c("Species", "Cultivar", "Hemi-\nsphere", #3
-              "Early century", "mid century, SSP1-2.6", "end century, SSP1-2.6", "mid century, SSP5-8.5", "end century, SSP5-8.5", #5
-              "mid century, SSP1-2.6, common", "end century, SSP1-2.6, common", "mid century, SSP5-8.5, common", "end century, SSP5-8.5, common", #3
-              "Mid to early century, SSP1-2.6", "Mid to early century, SSP5-8.5", "Common to early century, SSP1-2.6", "Common to early century, SSP5-8.5", "Loss of early to 126", "Loss of early to 585"), # 6
-  stringsAsFactors = FALSE )
-
-sumTable_main_flex <- set_header_df(sumTable_main_flex, mapping = typology_all, key = "col_keys_all")
-sumTable_main_flex <- merge_h(sumTable_main_flex, part = "header")
-sumTable_main_flex <- merge_v(sumTable_main_flex, j = c("species", "cultivar", "hemisphere", "ratiomid2Early_585"), part = "header")
-sumTable_main_flex <- theme_vanilla(sumTable_main_flex)
-sumTable_main_flex <- fix_border_issues(sumTable_main_flex)
-sumTable_main_flex <- autofit(sumTable_main_flex)
-sumTable_main_flex <- width(sumTable_main_flex, j = 7, width = 1.5)
-sumTable_main_flex <- width(sumTable_main_flex, j = 6, width = 1.0)
-sumTable_main_flex <- width(sumTable_main_flex, j = 3, width = 0.75)
-#sumTable_main_flex <- fit_to_width(sumTable_main_flex, 8, inc = 1L, max_iter = 20)
-
-# sumTable_main_flex <- footnote(sumTable_main_flex, i = NULL, j = c(5,7),
-#                           value = as_paragraph(
-#                             c("SSP585")
-#                           ),
-#                           ref_symbols = "a", part = "header", inline = FALSE, sep = "; "
-# )
-sumTable_main_flex <- align(sumTable_main_flex, align = "center", i = 1, j = 4, part = "header")
-sumTable_main_flex <- height(sumTable_main_flex, height = .25, part = "body")
-#sumTable_main_flex <- add_footer_row(sumTable_main_flex, values = "This is a note in footer" )
-#sumTable_main_flex <- merge_at(sumTable_main_flex, j = 1:5, part = "footer")
-
-#area only flextable -----
-col_keys_area = names(sumTable_main)[!grepl("ratio", names(sumTable_main), fixed = TRUE)]
-sumTable_main_flex_area <- flextable(sumTable_main, col_keys = col_keys_area)
-typology_area <- data.frame(
-  col_keys = col_keys_area,
-  # what = c("Area (sq. km)", "Area (sq. km)","Area (sq. km)", #3
-  #          "Area (sq. km)", "Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)"), #9
-  measure = c("Species", "Cultivar", "Hemi-\nsphere", #3
-              "Early century", "mid century, SSP1-2.6", "end century, SSP1-2.6", "mid century, SSP5-8.5", "end century, SSP5-8.5", 
-              "mid century, SSP1-2.6, common", "end century, SSP1-2.6, common", "mid century, SSP5-8.5, common", "end century, SSP5-8.5, common"), # 12
-  stringsAsFactors = FALSE )
-
-sumTable_main_flex_area <- set_header_df(sumTable_main_flex_area, mapping = typology_area)
-sumTable_main_flex_area <- merge_h(sumTable_main_flex_area, part = "header")
-# sumTable_main_flex_area <- merge_v(sumTable_main_flex_area, j = c("species", "cultivar", "hemisphere", "ratiomid2Early_585"), part = "header")
-sumTable_main_flex_area <- theme_vanilla(sumTable_main_flex_area)
-sumTable_main_flex_area <- fix_border_issues(sumTable_main_flex_area)
-sumTable_main_flex_area <- autofit(sumTable_main_flex_area)
-sumTable_main_flex_area <- width(sumTable_main_flex_area, j = 7, width = 1.0)
-sumTable_main_flex_area <- width(sumTable_main_flex_area, j = 6, width = 1.0)
-sumTable_main_flex_area <- width(sumTable_main_flex_area, j = 3, width = 0.75)
-sumTable_main_flex_area <- align(sumTable_main_flex_area, align = "center", i = 1, j = 4, part = "header")
-sumTable_main_flex_area <- height(sumTable_main_flex_area, height = .25, part = "body")
-sumTable_main_flex_area <- add_footer(sumTable_main_flex_area, values = "This is a note in footer" )
-
-prsect_area <- prop_section(
-  page_size = page_size(width = 8, height = 11, orient = "landscape"),
-  page_margins = page_mar(
-    bottom = 1, top = 1,
-    right = 1, left = 1,
-    header = 0.5, footer = 0.5, gutter = 0.5
-  ),
-  type = NULL,
-  section_columns = NULL
-)
-save_as_docx(sumTable_main_flex_area, values = NULL, path = "results/flextable_area_main.docx", pr_section = prsect_area)
-
-flextable_dim(sumTable_main_flex_area)
-
-dim_pretty(sumTable_main_flex_area)
-
-#ratios only flextable -----
-col_keys_ratios = c("species", "cultivar", "hemisphere", names(sumTable_main)[grepl("ratio", names(sumTable_main), fixed = TRUE)])
-sumTable_main_flex_ratios <- flextable(sumTable_main, col_keys = col_keys_ratios)
-typology_ratios <- data.frame(
-  col_keys = col_keys_ratios,
-  measure = c("Species", "Cultivar", "Hemi-\nsphere", #3
-              "Mid to early century, SSP1-2.6", "Mid to early century, SSP5-8.5", "Common to early century, SSP1-2.6", "Common to early century, SSP5-8.5", 
-              "Loss of early to SSP1-2.6", "Loss of early to SSP5-8.5"), #6
-  stringsAsFactors = FALSE )
-
-sumTable_main_flex_ratios <- set_header_df(sumTable_main_flex_ratios, mapping = typology_ratios)
-sumTable_main_flex_ratios <- merge_h(sumTable_main_flex_ratios, part = "header")
-# sumTable_main_flex_ratios <- merge_v(sumTable_main_flex_ratios, j = c("species", "cultivar", "hemisphere", "ratiomid2Early_585"), part = "header")
-sumTable_main_flex_ratios <- theme_vanilla(sumTable_main_flex_ratios)
-sumTable_main_flex_ratios <- fix_border_issues(sumTable_main_flex_ratios)
-sumTable_main_flex_ratios <- autofit(sumTable_main_flex_ratios)
-sumTable_main_flex_ratios <- width(sumTable_main_flex_ratios, j = 7, width = 1.0)
-sumTable_main_flex_ratios <- width(sumTable_main_flex_ratios, j = 6, width = 1.0)
-sumTable_main_flex_ratios <- width(sumTable_main_flex_ratios, j = 3, width = 0.75)
-sumTable_main_flex_ratios <- align(sumTable_main_flex_ratios, align = "center", i = 1, j = 4, part = "header")
-sumTable_main_flex_ratios <- height(sumTable_main_flex_ratios, height = .25, part = "body")
-prsect_ratios <- prop_section(
-  page_size = page_size(width = 8, height = 11, orient = "landscape"),
-  page_margins = page_mar(
-    bottom = 1, top = 1,
-    right = 1, left = 1,
-    header = 0.5, footer = 0.5, gutter = 0.5
-  ),
-  type = NULL,
-  section_columns = NULL
-)
-save_as_docx(sumTable_main_flex_ratios, values = NULL, path = "results/flextable_ratios_main.docx", pr_section = prsect_ratios)
-
-flextable_dim(sumTable_main_flex_ratios)
-
-dim_pretty(sumTable_main_flex_ratios)
-
-
-# results for lo chill portions cultivars -----
-sumTable_lo <- as.data.table(read.csv(file = paste0(locOfDataFiles_perennials, "sumTable", "_lo", ".csv")))
-sumTable_lo[, species := gsub("_lo", "", species)]
-sumTable_lo[, species := stringr::str_to_title(species)][species == "Winegrape", species := "Wine grape"]
-
-namesOrderOrig <- names(sumTable_lo)
-namesOrderNew <- c("species", "cultivar", "hemisphere", "historical_1991_2010", "ssp126_2041_2060", "ssp126_2081_2100", "ssp585_2041_2060", "ssp585_2081_2100", 
-                   "ssp126_2041_2060_common", "ssp585_2041_2060_common", 
-                   "ssp126_2081_2100_common", "ssp585_2081_2100_common", 
-                   "ratiomid2Early_126", "ratiomid2Early_585", 
-                   "ratioCommon2Early_126", "ratioCommon2Early_585", 
-                   "ratioLossOfEarly_126", "ratioLossOfEarly_585")
-setcolorder(sumTable_lo, namesOrderNew)
-sumTable_lo_flex <- flextable(sumTable_lo)
-# sumTable_lo_flex <- set_header_labels(sumTable_lo_flex, values = list(
-#   species = "species", cultivar = "cultivar", hemisphere = "hemisphere", 
-#   historical = "early century area", ssp585 = "mid century area, SSP585", ssp585_common = "common area, SSP mid century and early century", ratiomid2Early_585 = "area ratio, mid spp585 to beginning"))
-typology_all <- data.frame(
-  col_keys_all = names(sumTable_lo),
-  what = c("Species", "Cultivar", "Hemi-\nsphere", #3
-           "Area (sq. km)", "Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)", #9
-           "Area ratio", "Area ratio", "Area ratio", "Area ratio", "Area ratio", "Area ratio"), #15
-  measure = c("Species", "Cultivar", "Hemi-\nsphere", #3
-              "Early century", "mid century, SSP1-2.6", "end century, SSP1-2.6", "mid century, SSP5-8.5", "end century, SSP5-8.5", 
-              "mid century, SSP1-2.6, common", "end century, SSP1-2.6, common", "mid century, SSP5-8.5, common", "end century, SSP5-8.5, common", #3
-              "Mid to early century, SSP1-2.6", "Mid to early century, SSP5-8.5", "Common to early century, SSP1-2.6", "Common to early century, SSP5-8.5", "Loss of early to 126", "Loss of early to 585"), # 12
-  stringsAsFactors = FALSE )
-
-sumTable_lo_flex <- set_header_df(sumTable_lo_flex, mapping = typology_all, key = "col_keys_all")
-sumTable_lo_flex <- merge_h(sumTable_lo_flex, part = "header")
-sumTable_lo_flex <- merge_v(sumTable_lo_flex, j = c("species", "cultivar", "hemisphere", "ratiomid2Early_585"), part = "header")
-sumTable_lo_flex <- theme_vanilla(sumTable_lo_flex)
-sumTable_lo_flex <- fix_border_issues(sumTable_lo_flex)
-sumTable_lo_flex <- autofit(sumTable_lo_flex)
-sumTable_lo_flex <- fit_to_width(sumTable_lo_flex, max_width = 10, inc = 1L, max_iter = 20, unit = "in")
-
-sumTable_lo_flex <- width(sumTable_lo_flex, j = 7, width = 1.5)
-sumTable_lo_flex <- width(sumTable_lo_flex, j = 6, width = 1.0)
-sumTable_lo_flex <- width(sumTable_lo_flex, j = 3, width = 0.75)
-#sumTable_lo_flex <- fit_to_width(sumTable_lo_flex, 8, inc = 1L, max_iter = 20)
-
-# sumTable_lo_flex <- footnote(sumTable_lo_flex, i = NULL, j = c(5,7),
-#                           value = as_paragraph(
-#                             c("SSP585")
-#                           ),
-#                           ref_symbols = "a", part = "header", inline = FALSE, sep = "; "
-# )
-sumTable_lo_flex <- align(sumTable_lo_flex, align = "center", i = 1, j = 4, part = "header")
-sumTable_lo_flex <- height(sumTable_lo_flex, height = .25, part = "body")
-
-#area only flextable -----
-col_keys_area = names(sumTable_lo)[!grepl("ratio", names(sumTable_lo), fixed = TRUE)]
-sumTable_lo_flex_area <- flextable(sumTable_lo, col_keys = col_keys_area)
-typology_area <- data.frame(
-  col_keys = col_keys_area,
-  # what = c("Area (sq. km)", "Area (sq. km)","Area (sq. km)", #3
-  #          "Area (sq. km)", "Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)","Area (sq. km)"), #9
-  measure = c("Species", "Cultivar", "Hemi-\nsphere", #3
-              "Early century", "mid century, SSP1-2.6", "end century, SSP1-2.6", "mid century, SSP5-8.5", "end century, SSP5-8.5", 
-              "mid century, SSP1-2.6, common", "end century, SSP1-2.6, common", "mid century, SSP5-8.5, common", "end century, SSP5-8.5, common"), # 12
-  stringsAsFactors = FALSE )
-
-sumTable_lo_flex_area <- set_header_df(sumTable_lo_flex_area, mapping = typology_area)
-sumTable_lo_flex_area <- merge_h(sumTable_lo_flex_area, part = "header")
-# sumTable_lo_flex_area <- merge_v(sumTable_lo_flex_area, j = c("species", "cultivar", "hemisphere", "ratiomid2Early_585"), part = "header")
-sumTable_lo_flex_area <- theme_vanilla(sumTable_lo_flex_area)
-sumTable_lo_flex_area <- fix_border_issues(sumTable_lo_flex_area)
-sumTable_lo_flex_area <- autofit(sumTable_lo_flex_area)
-sumTable_lo_flex_area <- width(sumTable_lo_flex_area, j = 7, width = 1.0)
-sumTable_lo_flex_area <- width(sumTable_lo_flex_area, j = 6, width = 1.0)
-sumTable_lo_flex_area <- width(sumTable_lo_flex_area, j = 3, width = 0.75)
-sumTable_lo_flex_area <- align(sumTable_lo_flex_area, align = "center", i = 1, j = 4, part = "header")
-sumTable_lo_flex_area <- height(sumTable_lo_flex_area, height = .25, part = "body")
-prsect_area <- prop_section(
-  page_size = page_size(width = 8, height = 11, orient = "landscape"),
-  page_margins = page_mar(
-    bottom = 1, top = 1,
-    right = 1, left = 1,
-    header = 0.5, footer = 0.5, gutter = 0.5
-  ),
-  type = NULL,
-  section_columns = NULL
-)
-save_as_docx(sumTable_lo_flex_area, values = NULL, path = "results/flextable_area_lo.docx", pr_section = prsect_area)
-
-flextable_dim(sumTable_lo_flex_area)
-
-dim_pretty(sumTable_lo_flex_area)
-
-#ratios only flextable -----
-col_keys_ratios = c("species", "cultivar", "hemisphere", names(sumTable_lo)[grepl("ratio", names(sumTable_lo), fixed = TRUE)])
-sumTable_lo_flex_ratios <- flextable(sumTable_lo, col_keys = col_keys_ratios)
-typology_ratios <- data.frame(
-  col_keys = col_keys_ratios,
-  measure = c("Species", "Cultivar", "Hemi-\nsphere", #3
-              "Mid to early century, SSP1-2.6", "Mid to early century, SSP5-8.5", "Common to early century, SSP1-2.6", "Common to early century, SSP5-8.5", 
-              "Loss of early to SSP1-2.6", "Loss of early to SSP5-8.5"), #6
-  stringsAsFactors = FALSE )
-
-sumTable_lo_flex_ratios <- set_header_df(sumTable_lo_flex_ratios, mapping = typology_ratios)
-sumTable_lo_flex_ratios <- merge_h(sumTable_lo_flex_ratios, part = "header")
-# sumTable_lo_flex_ratios <- merge_v(sumTable_lo_flex_ratios, j = c("species", "cultivar", "hemisphere", "ratiomid2Early_585"), part = "header")
-sumTable_lo_flex_ratios <- theme_vanilla(sumTable_lo_flex_ratios)
-sumTable_lo_flex_ratios <- fix_border_issues(sumTable_lo_flex_ratios)
-sumTable_lo_flex_ratios <- autofit(sumTable_lo_flex_ratios)
-sumTable_lo_flex_ratios <- width(sumTable_lo_flex_ratios, j = 7, width = 1.0)
-sumTable_lo_flex_ratios <- width(sumTable_lo_flex_ratios, j = 6, width = 1.0)
-sumTable_lo_flex_ratios <- width(sumTable_lo_flex_ratios, j = 3, width = 0.75)
-sumTable_lo_flex_ratios <- align(sumTable_lo_flex_ratios, align = "center", i = 1, j = 4, part = "header")
-sumTable_lo_flex_ratios <- height(sumTable_lo_flex_ratios, height = .25, part = "body")
-prsect_ratios <- prop_section(
-  page_size = page_size(width = 8, height = 11, orient = "landscape"),
-  page_margins = page_mar(
-    bottom = 1, top = 1,
-    right = 1, left = 1,
-    header = 0.5, footer = 0.5, gutter = 0.5
-  ),
-  type = NULL,
-  section_columns = NULL
-)
-save_as_docx(sumTable_lo_flex_ratios, values = NULL, path = "results/flextable_ratios_lo.docx", pr_section = prsect_ratios)
-
 
 #suitable locations graphics, historical -----
-k <- "historical"
-l <- 1991
-for (speciesChoice in speciesChoices) {
-  print(paste0("Suitability level:  ", suitabilityLevel, ", speciesChoice: ", speciesChoice, ", ssp choice: ", k, ", start year: ", l))
-  f_suitableLocsGraphics(k, l, speciesChoice, suitabilityLevel)
-}
-
-#suitable locations graphics, scenarios -----
-for (k in sspChoices) {
-  for (l in startYearChoices) {
-    for (speciesChoice in speciesChoices) {
-      print(paste0("Suitability level:  ", suitabilityLevel, ", speciesChoice: ", speciesChoice, ", ssp choice: ", k, ", start year: ", l))
-      f_suitableLocsGraphics(k, l, speciesChoice, suitabilityLevel)
+for (hem in hemispheres) {
+  for (speciesName in speciesNames) {
+    k <- "historical"
+    l <- 1991
+    print(paste0("Suitability level:  ", suitabilityLevel, ", speciesName: ", speciesName, ", ssp choice: ", k, ", start year: ", l))
+    f_suitableLocsGraphics(k, l, speciesName, suitabilityLevel)
+    
+    #suitable locations graphics, scenarios -----
+    for (k in sspChoices) {
+      for (l in startYearChoices) {
+        print(paste0("Suitability level:  ", suitabilityLevel, ", speciesName: ", speciesName, ", ssp choice: ", k, ", start year: ", l))
+        f_suitableLocsGraphics(k, l, speciesName, suitabilityLevel)
+      }
     }
   }
 }
 
-#create facet maps for good suitability -----
-for (speciesChoice in speciesChoices) {
-  f_suitableLocsGraphics_clean(speciesChoice)
-}
+# moved to facet maps code to GCBFig2.R
+
+# #create facet maps for good suitability -----
+# for (speciesName in speciesNames) {
+#   f_suitableLocsGraphics_clean(speciesName)
+# }
 
 # demo slides ------
 k = "historical"
 l = 1991
 yearSpan <- paste0(l, "_", l + yearRange)
-speciesChoice <- "cherry_main"
+speciesName <- "cherry_main"
 legendTitle <- "Suitable"
 defaultColor <- c("green", "red")
-CPfruit <- cropVals[cropName == speciesChoice, chill_portions]
-gddsFruit <- cropVals[cropName == speciesChoice, gdd]
-excessiveHeat <- cropVals[cropName == speciesChoice, summer_heat_threshold]
+CPfruit <- cropVals[cropName == speciesName, chill_portions]
+gddsFruit <- cropVals[cropName == speciesName, gdd]
+excessiveHeat <- cropVals[cropName == speciesName, summer_heat_threshold]
 
-caption <- paste0("Note: ", suitabilityLevel, " growing conditions for ", strsplit(speciesChoice, "_")[[1]][1], ", ", cropVals[cropName == speciesChoice, cultivar], " variety", " include chill portions of at least ", CPfruit, ", at least ", gddsFruit, " growing degree days, \nno more than ", frostRiskDays[2], " days of frost risk during spring and no more than ", heatRiskDays[2], " days of excessive heat (above ", excessiveHeat,  "°C) in summer.")
+caption <- paste0("Note: ", suitabilityLevel, " growing conditions for ", strsplit(speciesName, "_")[[1]][1], ", ", cropVals[cropName == speciesName, cultivar], " variety", " include chill portions of at least ", CPfruit, ", at least ", gddsFruit, " growing degree days, \nno more than ", frostRiskDays[2], " days of frost risk during spring and no more than ", heatRiskDays[2], " days of excessive heat (above ", excessiveHeat,  "°C) in summer.")
 
-fileName_nonlimiting_all_NH_in <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_",  k, "_", suitabilityLevel, "_", "NH", "_", yearSpan, ".tif")
+fileName_nonlimiting_all_NH_in <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesName, "_",  k, "_", suitabilityLevel, "_", "NH", "_", yearSpan, ".tif")
 suitable_combined_NH <- rast(fileName_nonlimiting_all_NH_in)
 suitable_NH <- subset(suitable_combined_NH, "combinedSuit") 
 extremeCold_NH <- subset(suitable_combined_NH, "extremeColdSuit") 
@@ -750,7 +235,7 @@ unsuitableHeat_NH <- subset(suitable_combined_NH, "heatSuit")
 chillPortionsCutoff_NH <- subset(suitable_combined_NH, "chillPortionsSuit")
 gddsSuitable_NH <- subset(suitable_combined_NH, "gddsSuit") 
 
-fileName_nonlimiting_all_SH_in <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_",  k, "_", suitabilityLevel, "_", "SH", "_", yearSpan, ".tif")
+fileName_nonlimiting_all_SH_in <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesName, "_",  k, "_", suitabilityLevel, "_", "SH", "_", yearSpan, ".tif")
 suitable_combined_SH <- rast(fileName_nonlimiting_all_SH_in)
 suitable_SH <- subset(suitable_combined_SH, "combinedSuit") 
 extremeCold_SH <- subset(suitable_combined_SH, "extremeColdSuit") 
@@ -772,46 +257,46 @@ l <- 1991
 yearSpan <- paste0(l, "_", l + yearRange)
 r <- extremeCold
 col <- rev(defaultColor)
-tminExtremeVal <- cropVals[cropName == speciesChoice, low_temp_threshold]
-titleText <- paste0("Temperatures below ", tminExtremeVal, "°C for at least one day can kill ", strsplit(speciesChoice, "_")[[1]][1], ". \nResults are for the ", k, " scenario, ", "period ", gsub("_", "-", yearSpan), ". \nGreen areas are not limited by this metric.")
-fileName_out <- paste0(lofOfGraphicsFiles, "perennials/demoSlide_extremeColdMask_", speciesChoice, "_", suitabilityLevel, "_", k, "_", yearSpan, ".png")
+tminExtremeVal <- cropVals[cropName == speciesName, low_temp_threshold]
+titleText <- paste0("Temperatures below ", tminExtremeVal, "°C for at least one day can kill ", strsplit(speciesName, "_")[[1]][1], ". \nResults are for the ", k, " scenario, ", "period ", gsub("_", "-", yearSpan), ". \nGreen areas are not limited by this metric.")
+fileName_out <- paste0(lofOfGraphicsFiles, "perennials/demoSlide_extremeColdMask_", speciesName, "_", suitabilityLevel, "_", k, "_", yearSpan, ".png")
 f_graphics_demoSlides(r, titleText, caption, fileName_out, col)
 
 r <- chillPortionsCutoff # 1 is where chill portions is adequate 
 col <- rev(defaultColor)
-titleText <- paste0("Locations where chill portions are adequate for ", strsplit(speciesChoice, "_")[[1]][1], ", ", cropVals[cropName == speciesChoice, cultivar], " variety", ". \nResults are for the ", k, " scenario, ", "period ", gsub("_", "-", yearSpan))
-fileName_out <- paste0(lofOfGraphicsFiles, "perennials/demoSlide_chillPortionsCutoff_", speciesChoice, "_", suitabilityLevel, "_", k, "_", yearSpan, ".png")
+titleText <- paste0("Locations where chill portions are adequate for ", strsplit(speciesName, "_")[[1]][1], ", ", cropVals[cropName == speciesName, cultivar], " variety", ". \nResults are for the ", k, " scenario, ", "period ", gsub("_", "-", yearSpan))
+fileName_out <- paste0(lofOfGraphicsFiles, "perennials/demoSlide_chillPortionsCutoff_", speciesName, "_", suitabilityLevel, "_", k, "_", yearSpan, ".png")
 f_graphics_demoSlides(r, titleText, caption, fileName_out, col)
 
 {
   # these next lines of code must stay in this order.
   # titleText <- "Locations where the chill portions are not affected by extreme cold"
-  # fileName_out <- paste0(lofOfGraphicsFiles, "perennials/demoSlide_chillPortionsGood", speciesChoice, "_", suitabilityLevel, "_", k, "_", yearSpan, ".png")
+  # fileName_out <- paste0(lofOfGraphicsFiles, "perennials/demoSlide_chillPortionsGood", speciesName, "_", suitabilityLevel, "_", k, "_", yearSpan, ".png")
   # f_graphics_demoSlides(r, titleText, caption, fileName_out, col)
   
   r <- unsuitableFrost
   col <- rev(defaultColor)
-  titleText = paste0("Locations where the frost days during spring are not limiting for ", strsplit(speciesChoice, "_")[[1]][1], ". \nResults are for the ", k, " scenario, ", "period ", gsub("_", "-", yearSpan))
-  fileName_out <- paste0(lofOfGraphicsFiles, "perennials/demoSlide_springFrostRisk_", speciesChoice, "_", suitabilityLevel, "_", k, "_", yearSpan, ".png")
+  titleText = paste0("Locations where the frost days during spring are not limiting for ", strsplit(speciesName, "_")[[1]][1], ". \nResults are for the ", k, " scenario, ", "period ", gsub("_", "-", yearSpan))
+  fileName_out <- paste0(lofOfGraphicsFiles, "perennials/demoSlide_springFrostRisk_", speciesName, "_", suitabilityLevel, "_", k, "_", yearSpan, ".png")
   f_graphics_demoSlides(r, titleText, caption, fileName_out, col)
   
   r <- unsuitableHeat # 1 is where heat Ct is above the unsuitable level
   col <- rev(defaultColor)
-  titleText = paste0("Locations where summer hot days for ",  strsplit(speciesChoice, "_")[[1]][1], " are not limiting.", "\nResults are for the ", k, " scenario, ", "period ", gsub("_", "-", yearSpan))
-  fileName_out <- paste0(lofOfGraphicsFiles, "perennials/demoSlide_summerHeat_", speciesChoice, "_", suitabilityLevel, "_", k, "_", yearSpan, ".png")
+  titleText = paste0("Locations where summer hot days for ",  strsplit(speciesName, "_")[[1]][1], " are not limiting.", "\nResults are for the ", k, " scenario, ", "period ", gsub("_", "-", yearSpan))
+  fileName_out <- paste0(lofOfGraphicsFiles, "perennials/demoSlide_summerHeat_", speciesName, "_", suitabilityLevel, "_", k, "_", yearSpan, ".png")
   f_graphics_demoSlides(r, titleText, caption, fileName_out, col)
   
   r <- gddsSuitable # 1 is where heat Ct is above the unsuitable level
   col <- rev(defaultColor)
-  titleText = paste0("Locations where the growing degree days requirement for ",  strsplit(speciesChoice, "_")[[1]][1], " is met.", "\nResults are for the ", k, " scenario, ", "period ", gsub("_", "-", yearSpan))
-  fileName_out <- paste0(lofOfGraphicsFiles, "perennials/demoSlide_gdds_", speciesChoice, "_", suitabilityLevel, "_", k, "_", yearSpan, ".png")
+  titleText = paste0("Locations where the growing degree days requirement for ",  strsplit(speciesName, "_")[[1]][1], " is met.", "\nResults are for the ", k, " scenario, ", "period ", gsub("_", "-", yearSpan))
+  fileName_out <- paste0(lofOfGraphicsFiles, "perennials/demoSlide_gdds_", speciesName, "_", suitabilityLevel, "_", k, "_", yearSpan, ".png")
   f_graphics_demoSlides(r, titleText, caption, fileName_out, col)
 }
 
 # r <- heatCt
 # col <- defaultColor
 # titleText = "Locations in red are where the number of summer hot days are not suitable."
-# fileName_out <- paste0(lofOfGraphicsFiles, "perennials/demoSlide_summerHeat_", speciesChoice, "_", suitabilityLevel, "_", k, "_", yearSpan, ".png")
+# fileName_out <- paste0(lofOfGraphicsFiles, "perennials/demoSlide_summerHeat_", speciesName, "_", suitabilityLevel, "_", k, "_", yearSpan, ".png")
 # f_graphics_demoSlides(r, titleText, caption, fileName_out, col)
 
 # powerpoint, suitable regions -----
@@ -972,19 +457,18 @@ my_pres <- ph_with(x = my_pres, value = ensembleTitle, location = ph_location_ty
 
 # do historical first, then ssps and future periods
 for (suitabilityLevel in "good") { #
-  for (speciesChoice in speciesChoices) {
-    ensembleTitle <- paste("Non-temperature-limited locations for ", strsplit(speciesChoice, "_")[[1]][1]) #, ", Locations quality: ", suitabilityLevel
+  for (speciesName in speciesNames) {
+    ensembleTitle <- paste("Non-temperature-limited locations for ", strsplit(speciesName, "_")[[1]][1]) #, ", Locations quality: ", suitabilityLevel
     my_pres <- add_slide(x = my_pres, layout = 'Section Header', master = 'Office Theme')
     my_pres <- ph_with(x = my_pres, value = ensembleTitle, location = ph_location_type(type = "title"))
     
     k <- "historical"
     l <- 1991
-    yearSpan <- paste0(l, "_", l + yearRange)
-    my_pres <- f_suitableLocsPpt(k, l, yearSpan, suitabilityLevel, speciesChoice)
+    my_pres <- f_suitableLocsPpt(k, l, speciesName, suitabilityLevel)
     
     for (k in sspChoices) {
       for (l in startYearChoices) {
-        my_pres <- f_suitableLocsPpt(k, l, yearSpan, suitabilityLevel, speciesChoice)
+        my_pres <- f_suitableLocsPpt(k, l, speciesName, suitabilityLevel)
       }
     }
   }
@@ -1000,15 +484,16 @@ print(my_pres, target = "presentations/cmip6/perennials/summerHeatandspringFrost
 k <- "historical"
 l <- 1991
 yearSpan <- paste0(l, "_", l + yearRange)
-speciesChoice <- "winegrape_main"
+speciesName <- "cherry_main"
 suitabilityLevel = "good"
 cropLocations <- as.data.table(read_excel("data-raw/crops/perennials/cropLocations.xlsx"))
 #locsVector <- cropLocations[, location := NULL]
-speciesName <- gsub("_main", "", speciesChoice)
-if (speciesChoice == "winegrape_main") speciesName <- "wine grape"
+#speciesName <- gsub("_main", "", speciesName)
+speciesName <- f_speciesName(speciesName)
+#if (speciesName == "winegrape_main") speciesName <- "wine grape"
 locsVector <- cropLocations[species == speciesName,]
 setnames(locsVector, old = c("lon", "lat"), new = c("x", "y"))
-fileName_nonlimiting_all_in <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_",  k, "_", suitabilityLevel, "_", yearSpan, ".tif")
+fileName_nonlimiting_all_in <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesName, "_",  k, "_", suitabilityLevel, "_", yearSpan, ".tif")
 suit_all <- rast(fileName_nonlimiting_all_in)
 suit_all <- suit_all$combinedSuit
 main = paste0("Locations not temperature limited for ", speciesName, ", period: ", k)
@@ -1038,8 +523,48 @@ op <- par(xpd = NA)
 #text(labs, lab = parse(text = labs$lab), pos = c(2, 1)[labs$islon + 1], adj = 1.2)
 #text(subset(labs, labs$islon), lab = parse(text = labs$lab[labs$islon]), pos = 3)
 #text(subset(labs, !labs$islon), lab = parse(text = labs$lab[!labs$islon]), pos = 2)
-text(subset(labs, labs$islon), lab = parse(text = labs$lab[labs$islon]), pos = 1, cex=0.75, srt = 90)
-text(subset(labs, !labs$islon), lab = parse(text = labs$lab[!labs$islon]), pos = 2, cex=0.75)
+text(subset(labs, labs$islon), lab = parse(text = labs$lab[labs$islon]), pos = 1, cex = 0.75, srt = 90)
+text(subset(labs, !labs$islon), lab = parse(text = labs$lab[!labs$islon]), pos = 2, cex = 0.75)
 par(op)
 points(x = locsVector$x, y = locsVector$y)
 
+
+# old code -----
+# the special code commented out just below is (hopefully replaced by running f_gddSums over all crops)
+# added because almond, apple, and cherry have the same gdd requirements and grape and olive also have the same
+# first get all the gdd file names and pull out just the ones for almond and grape
+# gddFilesCompleted <- list.files(locOfgddsFiles,  full.names = TRUE)
+# gddFilesCompleted <- gddFilesCompleted[!grepl("aux.xml", gddFilesCompleted, fixed = TRUE)]
+# gddFilesCompleted <- gsub("//", "/", gddFilesCompleted)
+# gddSumFilesCompleted <- gddFilesCompleted[!grepl("gddSum_mean_", gddFilesCompleted, fixed = TRUE)]
+# gddSumFilesCompleted <- gddSumFilesCompleted[!grepl("ensemble_", gddSumFilesCompleted, fixed = TRUE)]
+# gddSumFilesCompleted <- gddSumFilesCompleted[grepl("gddSum_", gddSumFilesCompleted, fixed = TRUE)]
+# 
+# gddSumFiles_almond <- gddSumFilesCompleted[grepl("almond", gddSumFilesCompleted, fixed = TRUE)]
+# gddSumFiles_grape <- gddSumFilesCompleted[grepl("grape", gddSumFilesCompleted, fixed = TRUE)]
+# 
+# # because the gdds are the same for main and lo, the next bit of code just creates a new  filename and copies the main to the new
+# 
+# for (i in gddSumFiles_almond) {
+#   gdd_cherry <- gsub("almond", "cherry", i)
+#   
+#   file.copy(from = i, to = gdd_cherry, overwrite = TRUE, copy.mode = TRUE, copy.date = TRUE)
+#   gdd_apple <- gsub("almond", "apple", i)
+#   file.copy(from = i, to = gdd_apple, overwrite = TRUE, copy.mode = TRUE, copy.date = TRUE)
+#   print(gdd_cherry)
+#   print(i)
+#   al <- rast(i)
+#   plot(al, 1)
+#   al <- rast(gdd_cherry)
+#   plot(al, 1)
+#   
+# }
+# for (i in gddSumFiles_grape) {
+#   gdd_olive <- gsub("grape", "olive", i)
+#   file.copy(from = i, to = gdd_olive, overwrite = TRUE, copy.mode = TRUE, copy.date = TRUE)
+# }
+# 
+# for ( i in gddSumFilesCompleted) {
+#   i_lo <- gsub("_main", "_lo", i) 
+#   file.copy(from = i, to = i_lo, overwrite = TRUE, copy.mode = TRUE)
+# }

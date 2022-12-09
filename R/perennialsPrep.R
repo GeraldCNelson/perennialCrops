@@ -1,12 +1,12 @@
 #  creates the data tables majorCropValues_main, majorCropValues_lo and majorCropValues_hi
 library(readxl)
 library(data.table)
-supp_materials_chill_portions <- as.data.table(read_excel("data-raw/crops/perennials/supp_materials_2021_06_22.xlsx")) #, col_types = c("text", "text", "numeric", "text", "text")))
+supp_materials_chill_portions <- as.data.table(read_excel("data-raw/perennials/supp_materials_2021_06_22.xlsx")) #, col_types = c("text", "text", "numeric", "text", "text")))
 setnames(supp_materials_chill_portions, old = names(supp_materials_chill_portions), 
          new = c("cropName", "cultivar", "chill_requirement", "comment", "frost_threshold", "low_temp_threshold", "chill_hours", "summer_heat_threshold", "gdd", "gddtb", "GDD_opt", "reference_chill_portions", "reference_other_information", "reference_gdd", "other_comments"))
 supp_materials_chill_portions[, cropName := tolower(cropName)]
 
-# get rid of blueberries row for now
+# get rid of blueberries row
 supp_materials_chill_portions <- supp_materials_chill_portions[!cropName == "blueberries"]
 test <- data.table::copy(supp_materials_chill_portions)
 test <- test[, CR_cultivar_mean := round(mean(chill_requirement), 1), by = "cultivar"]
@@ -28,10 +28,11 @@ test[cropName == "almond", gddtb := 4.5]
 test[cropName == "apple", gddtb := 5]
 test[cropName == "cherry", gddtb := 5]
 test[cropName == "olive", gddtb := 10]
-test[cropName == "winegrape", gddtb := 10]
+#test[cropName == "winegrape", gddtb := 10]
+test[cropName == "grape", gddtb := 10]
 # ---- end of adjustments of July 6, 2021
-# use lower gdd value of 1100 for Chardonnay grapes
-test[cultivar == "Chardonnay", gdd := 1100]
+# use lower gdd value of 1100 for Chardonnay grapes and the artificial no-chill variety
+test[cultivar %in% c("Chardonnay", "No_chill"), gdd := 1100]
 
 # remove extraneous columns
 test [, c("chill_requirement", "comment", "reference_chill_portions", "reference_other_information", "other_comments", "chill_hours", "reference_gdd") := NULL]
