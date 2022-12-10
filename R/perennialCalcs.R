@@ -486,7 +486,7 @@ l <- 1991
 yearSpan <- paste0(l, "_", l + yearRange)
 speciesName <- "cherry_main"
 suitabilityLevel = "good"
-cropLocations <- as.data.table(read_excel("data-raw/crops/perennials/cropLocations.xlsx"))
+cropLocations <- as.data.table(read_excel("data-raw/perennials/cropLocations.xlsx"))
 #locsVector <- cropLocations[, location := NULL]
 #speciesName <- gsub("_main", "", speciesName)
 speciesName <- f_speciesName(speciesName)
