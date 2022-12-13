@@ -106,13 +106,13 @@ getCP <- function (tmin=tmin, tmax=tmax, dates, Day_times=daytimes, keep_sunrise
   tmin <- as.matrix(tmin)
   
   message('  Processing daylengths..')
-
+  
   # dates.all <- vector('list', length(datcells))
   dates.all <- vector('list', length(template[]))
   
   # pb <- txtProgressBar(max=length(datcells), style=3)
   for(n in datcells) {
-
+    
     if(datClass=='list') {
       
       # setTxtProgressBar(pb, n)
@@ -145,42 +145,35 @@ getCP <- function (tmin=tmin, tmax=tmax, dates, Day_times=daytimes, keep_sunrise
                                prev_max = NA,
                                next_min = NA,
                                prev_min = NA)            
-     any(is.na(dates.cell$Tmax))
+      any(is.na(dates.cell$Tmax))
       
     } else {
       stop('Invalid datclass')
     }
-                 
-      
+    
+    
     Day_times.cell <- list(Sunrise=Day_times$Sunrise[[n]], Sunset=Day_times$Sunset[[n]], Daylength=Day_times$Daylength[[n]])
     
     dates.all[[n]] <- MHT(dates.cell= dates.cell, 
-                           Day_times.cell = list(Sunrise=Day_times$Sunrise[[n]], Sunset=Day_times$Sunset[[n]], Daylength=Day_times$Daylength[[n]]))
+                          Day_times.cell = list(Sunrise=Day_times$Sunrise[[n]], Sunset=Day_times$Sunset[[n]], Daylength=Day_times$Daylength[[n]]))
     
-  message('  Calculating chill portions..')
-  # CP <- lapply(dates, function(x) CP::chill_func(na.omit(as.vector(t(x[,6:29]))))) # 6:29 refers to columns the hourly temperature data
-  
-  getChill <- function(x) {
-    if(!is.null(x)) {
-      CP::chill_func(na.omit(as.vector(t(x))))
-    } else {
-      NA
+    message('  Calculating chill portions..')
+    # CP <- lapply(dates, function(x) CP::chill_func(na.omit(as.vector(t(x[,6:29]))))) # 6:29 refers to columns the hourly temperature data
+    
+    getChill <- function(x) {
+      if(!is.null(x)) {
+        CP::chill_func(na.omit(as.vector(t(x))))
+      } else {
+        NA
+      }
     }
-  }
-  
-  CP <- lapply(dates.all, getChill) # 6:29 refers to columns the hourly temperature data
-  
-  # CP <- lapply(dates.all, function(x) CP::chill_func(na.omit(as.vector(t(x))))) # 6:29 refers to columns the hourly temperature data
-  
-  # na.omit(as.vector(t())) converts the dataframe of values to a vector by concatenating rows, giving a vector of hourly temperatures
-  # template[datcells] <- NA
-  # template[datcells] <- unlist(CP)
-  
-  template[] <- NA
-  template[] <- unlist(CP)
-  
-  return(template)
-  
+    
+    CP <- lapply(dates.all, getChill) # 6:29 refers to columns the hourly temperature data
+    
+    template[] <- NA
+    template[] <- unlist(CP)
+    
+    return(template)
   }
   
 }
@@ -233,97 +226,95 @@ dynamic_model <- function(x,total=TRUE){
 # parent function for calculating chill portions
 getChillSpatial <- function(years, lat, JDay, tmin, tmax, template, writeToDisk=FALSE,...) {
   message('Annualizing temperature data..')
-
+  
   # add days to JDay to account for omissions on either side
   JDay <- c(JDay[1]-1, JDay, JDay[length(JDay)]+1)
   
   if(class(tmin)=='list') {
-
+    
     datclass='list'
     
     # interpolate hourly temperatures  
     daytimes <-  DL(lat, JDay)
     CP <- future_lapply(seq_along(years), function(x) getCP(tmin=tmin[[x]],
-                                                   tmax=tmax[[x]],
-                                                   Day_times=daytimes,
-                                                   template=tmin[[1]][[1]],
-                                                   dates = data.frame(Year = years[x],
-                                                                      JDay = JDay),
-                                                   datClass=datclass))
+                                                            tmax=tmax[[x]],
+                                                            Day_times=daytimes,
+                                                            template=tmin[[1]][[1]],
+                                                            dates = data.frame(Year = years[x],
+                                                                               JDay = JDay),
+                                                            datClass=datclass))
     
   } else {
     
     datclass='stack'
     
-      if(class(tmin[[1]]) %in% c("RasterBrick", "RasterStack", "RasterLayer")) {
-        dates <- as.Date(1:nlayers(tmin), origin=as.Date(paste0(years[1], "-01-01"))-1)
-      } else {
-        if(class(tmin[[1]]) %in% c("SpatRaster")) {
-          dates <- as.Date(1:nlyr(tmin), origin=as.Date(paste0(years[1], "-01-01"))-1)
-        }
+    if(class(tmin[[1]]) %in% c("RasterBrick", "RasterStack", "RasterLayer")) {
+      dates <- as.Date(1:nlayers(tmin), origin=as.Date(paste0(years[1], "-01-01"))-1)
+    } else {
+      if(class(tmin[[1]]) %in% c("SpatRaster")) {
+        dates <- as.Date(1:nlyr(tmin), origin=as.Date(paste0(years[1], "-01-01"))-1)
       }
+    }
+    
+    dates.year <- lubridate::year(dates)
+    
+    tmin.out <- vector("list", length(unique(dates.year)))
+    tmax.out <- vector("list", length(unique(dates.year)))
+    period.dates <- vector("list", length(unique(dates.year)))
+    
+    # if(max(JDay)>365) {
+    # yearRange <- unique(dates.year)[1:(length(unique(dates.year))-1)]
+    yearRange <- years
+    
+    # } else {
+    # yearRange <- unique(dates.year)
+    # }
+    
+    pb <- txtProgressBar(max=length(yearRange), style=3)
+    for(i in seq_along(yearRange)) {
+      setTxtProgressBar(pb, i)
+      firstDay <- which(dates.year %in% years[i])[JDay][1]
+      lastDay <- firstDay + length(JDay)-1
+      period <- firstDay:lastDay
+      period.dates[[i]] <- dates[period]
       
-      dates.year <- lubridate::year(dates)
+      tmin.tmp <- brick(tmin[[period]]) 
+      tmin.tmp[] <- as.matrix(tmin.tmp)
       
-      tmin.out <- vector("list", length(unique(dates.year)))
-      tmax.out <- vector("list", length(unique(dates.year)))
-      period.dates <- vector("list", length(unique(dates.year)))
+      tmax.tmp <- brick(tmax[[period]]) 
+      tmax.tmp[] <- as.matrix(tmax.tmp)
       
-      # if(max(JDay)>365) {
-      # yearRange <- unique(dates.year)[1:(length(unique(dates.year))-1)]
-      yearRange <- years
-      
-      # } else {
-      # yearRange <- unique(dates.year)
-      # }
-      
-      pb <- txtProgressBar(max=length(yearRange), style=3)
-      for(i in seq_along(yearRange)) {
-        setTxtProgressBar(pb, i)
-        firstDay <- which(dates.year %in% years[i])[JDay][1]
-        lastDay <- firstDay + length(JDay)-1
-        period <- firstDay:lastDay
-        period.dates[[i]] <- dates[period]
-        
-        tmin.tmp <- brick(tmin[[period]]) 
-        tmin.tmp[] <- as.matrix(tmin.tmp)
-        
-        tmax.tmp <- brick(tmax[[period]]) 
-        tmax.tmp[] <- as.matrix(tmax.tmp)
-        
-        tmin.out[[i]] <- tmin.tmp
-        tmax.out[[i]] <- tmax.tmp
-      }
-      close(pb)
-      # run getCP function across years range
-      
-      if(max(JDay)>365) {
-        JDay[JDay>365] <- JDay[JDay>365]-365
-      }
-
-      message('  Calculating daylengths..')
-      daytimes <-  DL(brick(lat), JDay)
-
-      message('  Calculating chill portions..')
-      
-      tmp <- raster(tmin[[1]][[1]])
-
-      dates.list <- lapply(seq_along(years), function(x) data.frame(Year = year(period.dates[[x]]),
-                                                             JDay = yday(period.dates[[x]])))
-      rm(tmin, tmax)
-      gc()
-      
-      CP <- future_lapply(seq_along(years), function(x) getCP(tmin=tmin.out[[x]],
+      tmin.out[[i]] <- tmin.tmp
+      tmax.out[[i]] <- tmax.tmp
+    }
+    close(pb)
+    # run getCP function across years range
+    
+    if(max(JDay)>365) {
+      JDay[JDay>365] <- JDay[JDay>365]-365
+    }
+    
+    message('  Calculating daylengths..')
+    daytimes <-  DL(brick(lat), JDay)
+    
+    message('  Calculating chill portions..')
+    tmp <- raster(tmin[[1]][[1]])
+    dates.list <- lapply(seq_along(years), function(x) data.frame(Year = year(period.dates[[x]]),
+                                                                  JDay = yday(period.dates[[x]])))
+    rm(tmin, tmax)
+    gc()
+    
+    CP <- future_lapply(seq_along(years), function(x) getCP(tmin=tmin.out[[x]],
                                                             tmax=tmax.out[[x]],
                                                             Day_times=daytimes,
                                                             template=tmp,
                                                             dates = dates.list[[x]],
                                                             datClass=datclass))
-      
+    
   }
-
+  
   return(CP)
-
+  
 }
 
 getChillWorld <- function(scenario, model, year_range) {
@@ -337,7 +328,7 @@ getChillWorld <- function(scenario, model, year_range) {
   # dat.files <- grep(year_range, dat.files, invert = TRUE, value = TRUE)
   tmin.files <- grep("tasmin", dat.files, value=TRUE)
   tmax.files <- grep("tasmax", dat.files, value=TRUE)
-
+  
   if(all(year_range==1991:2010)) {
     tmin.in <- rast(tmin.files[1]) # %>% aggregate(fact=2)
     tmax.in <- rast(tmax.files[1]) # %>% aggregate(fact=2)
@@ -382,43 +373,43 @@ getChillWorld <- function(scenario, model, year_range) {
   tmax.north <- crop(tmax.in, ext(c(-180,180,0,90)))
   # tmax.north <- crop(tmax.in, ext(c(-100,-80,30,50)))
   gc()
-
+  
   # produce spatial layer of latitudes and use to calculate day lengths
   lat <- tmin.north[[c(JDay.north[1]-1, JDay.north, JDay.north[length(JDay.north)]+1)]]
   xy <- coordinates(raster(tmin.north[[1]][[1]]))
   values(lat) <- xy[,2]
-
+  
   rm(tmin.in, tmax.in)
   gc()
-
+  
   # set a template raster to define the attributes of the final output raster
   # this can be a single layer of temperature data, for example
   template.ras <- tmin.north[[1]]
-
+  
   # process daily temperatures
   year_range.north <- year_range[1:(length(year_range)-1)]
   t <- proc.time()
   chill_portions.north <- getChillSpatial(years=year_range.north, lat, JDay.north, tmin=tmin.north, tmax=tmax.north, template=template.ras)
   t1 <- t-proc.time()
   t1/60
-
+  
   dir.create(paste0('../../chillPortions/worldchill/chill_portions/', scenario, '/', model, '/', year_range[10]), recursive = TRUE)
-
-    # chill_portions.north.raster <- rast(stack(lapply(chill_portions.north, raster)))
-
+  
+  # chill_portions.north.raster <- rast(stack(lapply(chill_portions.north, raster)))
+  
   chill_portions.north.raster <- rast(stack(chill_portions.north))
-
-
+  
+  
   writeRaster(chill_portions.north.raster,
               paste0('../../chillPortions/worldchill/chill_portions/',
                      scenario, '/', model, '/', scenario, '_', model, '_', year_range[10], '_', 'chill_portions_north.tif'),
               overwrite=TRUE)
-
+  
   rm(tmin.north, tmax.north)
   gc()
   
   #### run calculations on southern hemisphere ####
-
+  
   if(all(year_range==1991:2010)) {
     tmin.in <- rast(tmin.files[1]) # %>% aggregate(fact=2)
     tmax.in <- rast(tmax.files[1]) # %>% aggregate(fact=2)
@@ -431,25 +422,25 @@ getChillWorld <- function(scenario, model, year_range) {
   } else {
     stop("Unsupported year range specified.")
   }
-
+  
   future:::ClusterRegistry("stop")
   gc()
   plan(multiprocess, workers=3, gc=TRUE)
-
+  
   message('  Cropping extent to southern hemisphere (excluding Antarctica)..')
   tmin.south <- crop(tmin.in, ext(c(-180,180,-60,0))) # -60 no antarctica
   gc()
   tmax.south <- crop(tmax.in, ext(c(-180,180,-60,0)))
-
+  
   rm(tmin.in, tmax.in)
   gc()
-
+  
   # produce spatial layer of latitudes and use to calculate day lengths
   lat <- tmin.south[[c(JDay.south[1]-1, JDay.south, JDay.south[length(JDay.south)]+1)]]
-
+  
   xy <- coordinates(raster(tmin.south[[1]][[1]]))
   values(lat) <- xy[,2]
-
+  
   # set a template raster to define the attributes of the final output raster
   # this can be a single layer of temperature data, for example
   template.ras <- tmin.south[[1]]#[[1]]
@@ -458,7 +449,7 @@ getChillWorld <- function(scenario, model, year_range) {
   chill_portions.south <- getChillSpatial(years=year_range, lat, JDay.south, tmin=tmin.south, tmax=tmax.south, template=template.ras)
   t1 <- t-proc.time()
   t1/60
-
+  
   chill_portions.south.raster <- rast(stack(chill_portions.south))
   writeRaster(chill_portions.south.raster,
               paste0('../../chillPortions/worldchill/chill_portions/',
@@ -515,33 +506,23 @@ MHT <- function (dates.cell, Day_times.cell, keep_sunrise_sunset = FALSE)
     Day_times$Sunset[which(Day_times$Sunset == 99)] <- 24
     Day_times$Sunset[which(Day_times$Sunset == -99)] <- 12
     
-    year_file$Sunrise <- Day_times$Sunrise[2:(length(Day_times$Sunrise) - 
-                                                1)]
-    year_file$Sunset <- Day_times$Sunset[2:(length(Day_times$Sunset) - 
-                                              1)]
-    year_file$Daylength <- Day_times$Daylength[2:(length(Day_times$Daylength) - 
-                                                    1)]
-    year_file$prev_Sunset <- Day_times$Sunset[1:(length(Day_times$Sunset) - 
-                                                   2)]
+    year_file$Sunrise <- Day_times$Sunrise[2:(length(Day_times$Sunrise) - 1)]
+    year_file$Sunset <- Day_times$Sunset[2:(length(Day_times$Sunset) - 1)]
+    year_file$Daylength <- Day_times$Daylength[2:(length(Day_times$Daylength) -  1)]
+    year_file$prev_Sunset <- Day_times$Sunset[1:(length(Day_times$Sunset) -  2)]
     year_file$next_Sunrise <- Day_times$Sunrise[3:length(Day_times$Sunrise)]
-    year_file$prev_max <- year_file$Tmax[c(NA, 1:(nrow(year_file) - 
-                                                    1))]
-    year_file$next_min <- year_file$Tmin[c(2:nrow(year_file), 
-                                           NA)]
-    year_file$prev_min <- year_file$Tmin[c(NA, 1:(nrow(year_file) - 
-                                                    1))]
+    year_file$prev_max <- year_file$Tmax[c(NA, 1:(nrow(year_file) -   1))]
+    year_file$next_min <- year_file$Tmin[c(2:nrow(year_file),  NA)]
+    year_file$prev_min <- year_file$Tmin[c(NA, 1:(nrow(year_file) -  1))]
     year_file$Tsunset <- year_file$Tmin + (year_file$Tmax - year_file$Tmin) * 
-      sin((pi * (year_file$Sunset - year_file$Sunrise)/(year_file$Daylength + 
-                                                          4)))
-    year_file$prev_Tsunset <- year_file$prev_min + (year_file$prev_max - 
-                                                      year_file$prev_min) * sin((pi * (year_file$Daylength)/(year_file$Daylength + 
-                                                                                                               4)))
+      sin((pi * (year_file$Sunset - year_file$Sunrise)/(year_file$Daylength +  4)))
+    year_file$prev_Tsunset <- year_file$prev_min + 
+      (year_file$prev_max - year_file$prev_min) * sin((pi * (year_file$Daylength)/(year_file$Daylength +   4)))
     colnum <- ncol(year_file) + 1
     hourcol <- c(colnum:(colnum + 23))
     for (hour in 0:23) {
       hourcount <- hour + 1
-      no_riseset <- which(year_file$Daylength %in% c(0, 24, 
-                                                     -99))
+      no_riseset <- which(year_file$Daylength %in% c(0, 24, -99))
       year_file[no_riseset, colnum + hour] <- ((year_file$Tmax + 
                                                   year_file$Tmin)/2)[no_riseset]
       c_morn <- which(hour <= year_file$Sunrise)
@@ -554,37 +535,32 @@ MHT <- function (dates.cell, Day_times.cell, keep_sunrise_sunset = FALSE)
       if (nrow(year_file) %in% c_eve) 
         c_eve <- c_eve[1:(length(c_eve) - 1)]
       year_file[c_morn, colnum + hour] <- year_file$prev_Tsunset[c_morn] - 
-        ((year_file$prev_Tsunset[c_morn] - year_file$Tmin[c_morn])/log(max(1, 
-                                                                           24 - (year_file$prev_Sunset[c_morn] - year_file$Sunrise[c_morn]))) * 
-           log(hour + 24 - year_file$prev_Sunset[c_morn] + 
-                 1))
+        ((year_file$prev_Tsunset[c_morn] - year_file$Tmin[c_morn])/
+           log(max(1,24 - (year_file$prev_Sunset[c_morn] - year_file$Sunrise[c_morn]))) * 
+           log(hour + 24 - year_file$prev_Sunset[c_morn] +  1))
       year_file[c_day, colnum + hour] <- year_file$Tmin[c_day] + 
         (year_file$Tmax[c_day] - year_file$Tmin[c_day]) * 
         sin((pi * (hour - year_file$Sunrise[c_day])/(year_file$Daylength[c_day] + 
                                                        4)))
       year_file[c_eve, colnum + hour] <- year_file$Tsunset[c_eve] - 
-        ((year_file$Tsunset[c_eve] - year_file$next_min[c_eve])/log(24 - 
-                                                                      (year_file$Sunset[c_eve] - year_file$next_Sunrise[c_eve]) + 
-                                                                      1) * log(hour - year_file$Sunset[c_eve] + 1))
+        ((year_file$Tsunset[c_eve] - year_file$next_min[c_eve])/
+           log(24 - (year_file$Sunset[c_eve] - year_file$next_Sunrise[c_eve]) + 
+                 1) * log(hour - year_file$Sunset[c_eve] + 1))
     }
-    colnames(year_file)[(ncol(year_file) - 23):(ncol(year_file))] <- c(paste("Hour_", 
-                                                                             0:23, sep = ""))
+    colnames(year_file)[(ncol(year_file) - 23):(ncol(year_file))] <- c(paste("Hour_", 0:23, sep = ""))
     if (!keep_sunrise_sunset) 
-      year_file <- year_file[, c(preserve_columns, paste("Hour_", 
-                                                         0:23, sep = ""))]
+      year_file <- year_file[, c(preserve_columns, paste("Hour_", 0:23, sep = ""))]
     if (keep_sunrise_sunset) 
       year_file <- year_file[, c(preserve_columns, "Sunrise", 
-                                 "Sunset", "Daylength", paste("Hour_", 
-                                                              0:23, sep = ""))]
-    year_file[1, (ncol(year_file) - 23):(ncol(year_file))][which(is.na(year_file[1, 
-                                                                                 (ncol(year_file) - 23):(ncol(year_file))]))] <- year_file[1, 
-                                                                                                                                           "Tmin"]
-    year_file[nrow(year_file), (ncol(year_file) - 23):(ncol(year_file))][which(is.na(year_file[nrow(year_file), 
-                                                                                               (ncol(year_file) - 23):(ncol(year_file))]))] <- year_file[nrow(year_file), 
-                                                                                                                                                         "Tmin"]
+                                 "Sunset", "Daylength", paste("Hour_",  0:23, sep = ""))]
+    year_file[1, (ncol(year_file) - 23):(ncol(year_file))][
+      which(is.na(year_file[1, 
+                            (ncol(year_file) - 23):(ncol(year_file))]))] <- year_file[1,"Tmin"]
+    year_file[nrow(year_file), (ncol(year_file) - 23):(ncol(year_file))][
+      which(is.na(year_file[nrow(year_file), 
+                            (ncol(year_file) - 23):(ncol(year_file))]))] <- year_file[nrow(year_file), "Tmin"]
     matrix.out <- as.matrix(year_file[,14:37])
     return(matrix.out)
-    # return(year_file)
   }
 }
 

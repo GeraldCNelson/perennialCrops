@@ -7,10 +7,9 @@ locOfFiles <- locOfCMIP6ncFiles
 sspChoices <- c("ssp585") #"ssp126", 
 modelChoices <- c("IPSL-CM6A-LR")# 
 
-modelChoices <- c("IPSL-CM6A-LR", "GFDL-ESM4", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL") #, "MPI-ESM1-2-HR", "MRI-ESM2-0", "IPSL-CM6A-LR") # "GFDL-ESM4", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL", "IPSL-CM5A-LR"
-#modelChoices <- c("GFDL-ESM4", "MPI-ESM1-2-HR", "MRI-ESM2-0") #, "MPI-ESM1-2-HR", "MRI-ESM2-0", "IPSL-CM6A-LR") # "GFDL-ESM4", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL", "IPSL-CM5A-LR"
+modelChoices <- c("IPSL-CM6A-LR", "GFDL-ESM4", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL") 
 
-startYearChoices <-  c(2021, 2051, 2091) #, 2051, 2091) #2011, 2041, 2051, 2081) # c(2091) # c(2006) #, 2041, 2051, 2081)
+startYearChoices <-  c(2021, 2051, 2091) 
 
 yearRange <- 9
 
@@ -33,8 +32,7 @@ southernHemSummer <- c("Nov", "Dec", "Jan", "Feb", "Mar", "Apr")
 # useCores <- detectCores() - 2 # max number of cores
 # useCores <- 2 # better for memory intensive activities
 
-# varList <- c("startYearChoices", "sspChoices", "modelChoices", "locOfFiles")
-# libList <- c("terra", "ncdf4")
+
 library(Rcpp)
 cppFunction('std::vector<double> chill(std::vector<double> tmin, std::vector<double> tmax) {
 size_t n = tmin.size();
@@ -59,19 +57,13 @@ for (l in startYearChoices) {
     for (k in sspChoices) {
       
       print(paste0("start year: ", l, " ssp: ", k, " pid: ", Sys.getpid(), " systime: ", Sys.time()))
-      
       modelName.lower <- tolower(i)
       startTime <-  Sys.time()
       yearSpan <- paste0(l, "_", l + yearRange)
-      j <- "tasmax"
-      fileName_in <- paste(modelName.lower, k, j, "global_daily", yearSpan, sep = "_")
-      fileName_in <- paste0(fileName_in, ".tif")
-      
+      fileName_in <- paste(modelName.lower, k, "tasmax", "global_daily", yearSpan, sep = "_", ".tif")
       tmaxIn <- paste0(locOfFiles, k,"/", i, "/", fileName_in)
       
-      j <- "tasmin"
-      fileName_in <- paste(modelName.lower, k, j, "global_daily", yearSpan, sep = "_")
-      fileName_in <- paste0(fileName_in, ".tif")
+      fileName_in <- paste(modelName.lower, k, "tasmin", "global_daily", yearSpan, sep = "_", ".tif")
       tminIn <- paste0(locOfFiles, k,"/", i, "/", fileName_in)
       tmaxTminIn(tmaxIn, tminIn) # function to read in tmax and tmin with rast
       terra:::.mem_info(tmax, 1)
