@@ -7,8 +7,7 @@
   source("R/ISIMIPconstants.R")
   source("R/ISIMIPspatialConstants.R")
   source("R/perennialsPrep.R") # get the latest chill portions data
-  # choose whether to do the base cps, or the lo or hi cp requirements varieties
-  varietyChoices <- c("varieties_lo", "varieties_main")
+  # choose whether to do the base chill portions, or the lo chill protion requirements
   varietyChoices <- c("varieties_main")
   chillLevels <- c("_lo", "_main")  
   #test values

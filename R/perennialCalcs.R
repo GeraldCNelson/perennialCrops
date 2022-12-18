@@ -479,7 +479,7 @@ my_pres <-  ph_with(x = my_pres, value = "Data Sources", location = ph_location_
 my_pres <- ph_with(x = my_pres, value = blData, location = ph_location_type(type = "body") )
 
 print(my_pres, target = "presentations/cmip6/perennials/summerHeatandspringFrost.pptx") %>% browseURL
-#xx
+
 # plot points on a raster -----
 k <- "historical"
 l <- 1991
