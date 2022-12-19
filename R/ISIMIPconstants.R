@@ -19,15 +19,15 @@ woptList <- list(gdal=c("COMPRESS=DEFLATE", "PREDICTOR=2", "ZLEVEL = 6", "NUM_TH
 
 # file locations -----
 locOfClimFiles <- "climdata/"
-locOfDataFiles_perennials <- "data/perennials/"
+path_data <- "data/perennials/"
 locOfCPFiles <- "data/chillPortions/chill_portions/"
 locOfDataFiles_THI <- "data/THI/"
 locOfResultsFiles <- "results/"
-lofOfGraphicsFiles <- "graphics/cmip6/"
+lofOfGraphicsFiles <- "graphics/"
 locOfRawDataFiles <- "data-raw/"
 locOfHarvestDataFiles <- "data-raw/crops/HarvestedAreaYield175Crops_Geotiff/GeoTiff/"
 locOfgddsFiles <- "data/growingDegreeDays/"
-locOfRunsFiles <- "data/runs/"
+path_data <- "data/runs/"
 
 # general test values
 modelChoice <-  "IPSL-CM6A-LR"

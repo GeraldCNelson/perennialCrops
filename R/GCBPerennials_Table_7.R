@@ -1,5 +1,6 @@
 library(terra)
 library(data.table)
+path_data <- "data/perennials/"
 speciesChoices <- c("almond_main", "apple_main",  "cherry_main", "olive_main",  "grape_main")
 speciesNames <- gsub("_main", "", speciesChoices)
 dominantVarieties <- c("Gala", "Nonpareil", "Lapins", "Picual", "Northern highbush", "Chardonnay") # most widely grown
@@ -7,7 +8,6 @@ loChillVarieties <- c("Achak", "Eva", "17GE580", "Chemlali", "No_chill")
 extent_noAntarctica <- ext(-180, 180, -60, 90)
 hemispheres <- c("NH", "SH")
 yearRange <- 19
-path_data <- "data/perennials/"
 f_getArea <- function(r, layer) {
   r_sub <- subset(r, layer)
   r_sub[r_sub < 1 | r_sub > 1] <- NA # keep only locations with value of 1

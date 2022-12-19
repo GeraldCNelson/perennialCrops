@@ -1,5 +1,6 @@
 # area calculations for perennials paper with Tables 5 and 6 -----
 chillLevel <- "_main" # kludge
+path_data <- "data/perennials/"
 source("R/perennialFunctions.R")
 {  
   suitabilityLevels <- "good"
@@ -23,7 +24,7 @@ source("R/perennialFunctions.R")
           for (k in sspChoices) {
             for (l in startYearChoices) {
               yearSpan <- paste0(l, "_", l + yearRange)
-              fileName_in <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_", k, "_", suitabilityLevel, "_", hem, "_", yearSpan, ".tif")
+              fileName_in <- paste0(path_data, "nonlimiting_all_", speciesChoice, "_", k, "_", suitabilityLevel, "_", hem, "_", yearSpan, ".tif")
               rastName <- paste0("suitable_", speciesChoice, "_", hem, "_", k, "_", suitabilityLevel, "_", yearSpan)
               # r has all 5 suitability layers, get just the combined one
               r_combSuit <- rast(fileName_in, lyrs = 1 )
@@ -37,7 +38,7 @@ source("R/perennialFunctions.R")
           k <- "historical"
           l <- 1991
           yearSpan <- paste0(l, "_", l + yearRange)
-          fileName_in <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_", k, "_", suitabilityLevel, "_", hem, "_", yearSpan, ".tif")
+          fileName_in <- paste0(path_data, "nonlimiting_all_", speciesChoice, "_", k, "_", suitabilityLevel, "_", hem, "_", yearSpan, ".tif")
           rastName <- paste0("suitable_", speciesChoice, "_", hem, "_", k, "_", suitabilityLevel, "_", yearSpan)
           # r has all 5 suitability layers, get just the combined one
           r_combSuit <- rast(fileName_in, lyrs = 1 )
@@ -48,7 +49,7 @@ source("R/perennialFunctions.R")
         }
       }
     }
-    fileName_out <- paste0(locOfDataFiles_perennials, "areaCalcs", chillLevel, ".csv")
+    fileName_out <- paste0(path_data, "areaCalcs", chillLevel, ".csv")
     write.csv(dt_area, file = fileName_out, row.names = FALSE)
     print(paste0("fileName out: ", fileName_out)) # input into table 5
   }
@@ -71,7 +72,7 @@ source("R/perennialFunctions.R")
     for (hem in hemispheres) {
       suitabilityLevels <- "good"
       for (suitabilityLevel in suitabilityLevels) {
-        filename_r_historical_in <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_", "historical", "_", suitabilityLevel, "_", hem, "_", "1991_2010.tif")
+        filename_r_historical_in <- paste0(path_data, "nonlimiting_all_", speciesChoice, "_", "historical", "_", suitabilityLevel, "_", hem, "_", "1991_2010.tif")
         r_historical_combinedSuit <- rast(filename_r_historical_in, lyrs = "combinedSuit") # combined suitability means all of the temp metrics are satisfied (+1)
         r_base <- r_historical_combinedSuit; r_base[r_base < 1] <- NA
         area_base <- f_getArea(r_base, layer = 1)
@@ -81,7 +82,7 @@ source("R/perennialFunctions.R")
         for (l in startYearChoices) {
           yearSpan <- paste0(l, "_", l + yearRange)
           for (k in sspChoices) {
-            filename_r_ssp_in <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_",  k, "_", suitabilityLevel, "_", hem, "_", yearSpan, ".tif")
+            filename_r_ssp_in <- paste0(path_data, "nonlimiting_all_", speciesChoice, "_",  k, "_", suitabilityLevel, "_", hem, "_", yearSpan, ".tif")
             r_ssp_combinedSuit <- rast(filename_r_ssp_in, lyrs = "combinedSuit")
             #r_ssp_combinedSuit[r_ssp_combinedSuit == 0] <- NA
             r_sum <- r_ssp_combinedSuit + r_historical_combinedSuit # 2 - in both periods, 1 in 1 of the periods, 0 not in either
@@ -93,7 +94,7 @@ source("R/perennialFunctions.R")
             r_hist_loss <- r_hist_loss * -1 # convert the -1s to 1s
             r_ssp_gain <- r_delta; r_ssp_gain[!r_ssp_gain == 1 ] <- NA # new pixels from SSP; remove historical pixels lost (-1) and pixels where either both are 1 or both are 0
             
-            fileName_r_end_lo_in <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", paste0(speciesName, "_lo"), "_",  k, "_", suitabilityLevel, "_", hem, "_", yearSpan, ".tif")
+            fileName_r_end_lo_in <- paste0(path_data, "nonlimiting_all_", paste0(speciesName, "_lo"), "_",  k, "_", suitabilityLevel, "_", hem, "_", yearSpan, ".tif")
             r_ssp_combinedSuit_lo <- rast(fileName_r_end_lo_in, lyrs = "combinedSuit")
             r_ssp_lo <- r_ssp_combinedSuit_lo; r_ssp_lo[!r_ssp_lo == 1 ] <- NA # new pixels from SSP; remove historical pixels lost (-1) and pixels where either both are 1 or both are 0
             r_ssp_delta_lo <- r_ssp_combinedSuit_lo - r_ssp_combinedSuit 
@@ -114,7 +115,7 @@ source("R/perennialFunctions.R")
           }
           test <- c(r_base, r_ssp, r_hist_loss, r_ssp_gain, r_ssp_lo, r_ssp_gain_lo)
           names(test) <- c("r_base", "r_ssp", "r_hist_loss", "r_ssp_gain", "r_ssp_lo", "r_ssp_gain_lo")
-          fileName_various_out <- paste0(locOfDataFiles_perennials, speciesName, "_", "areaSuitabilityCombos", "_", hem, ".tif")
+          fileName_various_out <- paste0(path_data, speciesName, "_", "areaSuitabilityCombos", "_", hem, ".tif")
           writeRaster(test, filename = fileName_various_out, overwrite = TRUE, wopt = woptList)
           print(paste0("fileName_various_out: ", fileName_various_out))
         }
@@ -122,7 +123,7 @@ source("R/perennialFunctions.R")
     }
   }
   
-  fileName_out <- paste0(locOfDataFiles_perennials, "areaCalcs_delta", chillLevel, ".csv")
+  fileName_out <- paste0(path_data, "areaCalcs_delta", chillLevel, ".csv")
   write.csv(dt_area_delta, file = fileName_out, row.names = FALSE)
   print(paste0("fileName out: ", fileName_out))
 }
@@ -157,7 +158,7 @@ for (chillLevel in c("_lo", "_main")) {
     # harvestArea_earlyCent_SH <- crop(harvestArea_earlyCent, extent_SH)
     #suitable areas -----
     # suitable area end century
-    fileName_start <- paste0(locOfDataFiles_perennials, "nonlimiting_all_", speciesChoice, "_")
+    fileName_start <- paste0(path_data, "nonlimiting_all_", speciesChoice, "_")
     
     # suitable historical area
     fileName_in_historical_SH <- paste0(fileName_start, "historical", "_", suitabilityLevel, "_", "SH", "_", "1991_2010", ".tif")
@@ -222,12 +223,12 @@ for (chillLevel in c("_lo", "_main")) {
   dt_area_common <- rbind(dt_area_common_mid, dt_area_common_end)
   dt_area_common[, ssp_year := paste0(ssp, "_", yearSpan)]
   dt_area_common[, yearSpan := NULL]
-  # fileName_out <- paste0(locOfDataFiles_perennials, "areaCalcs_common", "_", k, chillLevel, ".csv")
+  # fileName_out <- paste0(path_data, "areaCalcs_common", "_", k, chillLevel, ".csv")
   # write.csv(dt_area_common, file = fileName_out, row.names = FALSE)
   # print(paste0("fileName out: ", fileName_out))
   
   # create table of area changes ------
-  dt_area <- as.data.table(read.csv(file = paste0(locOfDataFiles_perennials, "areaCalcs", chillLevel, ".csv")))
+  dt_area <- as.data.table(read.csv(file = paste0(path_data, "areaCalcs", chillLevel, ".csv")))
   dt_area[,ssp_year := paste0(ssp, "_", yearSpan)]
   dt_area[, c("quality", "rasterName",  "yearSpan") := NULL] #"ssp",
   dt_area_wide <-        dcast(dt_area,        species + cultivar + chillPortions + hemisphere ~ ssp_year, value.var = "area_suitable")
@@ -264,14 +265,14 @@ for (chillLevel in c("_lo", "_main")) {
   combined[, (sumColumns) := round(.SD, 0), .SDcols = sumColumns]
   combined[, chillPortions := NULL] # column not needed for presentation table
   
-  write.csv(combined, file = paste0(locOfDataFiles_perennials, "sumTable", chillLevel, ".csv"), row.names = FALSE)
+  write.csv(combined, file = paste0(path_data, "sumTable", chillLevel, ".csv"), row.names = FALSE)
 }
 
 # prepare summary table ------
 # main varieties -----
 library(flextable)
 library(officer)
-sumTable_main <- as.data.table(read.csv(file = paste0(locOfDataFiles_perennials, "sumTable", "_main", ".csv")))
+sumTable_main <- as.data.table(read.csv(file = paste0(path_data, "sumTable", "_main", ".csv")))
 sumTable_main[, species := gsub("_main", "", species)]
 
 
@@ -372,7 +373,7 @@ sumTable_main_flex_ratios
 save_as_docx(sumTable_main_flex_ratios, values = NULL, path = "results/flextable_ratios_main.docx", pr_section = prsect_ratios)
 
 # results for lo chill portions cultivars -----
-sumTable_lo <- as.data.table(read.csv(file = paste0(locOfDataFiles_perennials, "sumTable", "_lo", ".csv")))
+sumTable_lo <- as.data.table(read.csv(file = paste0(path_data, "sumTable", "_lo", ".csv")))
 sumTable_lo[, species := gsub("_lo", "", species)]
 sumTable_lo_flex <- flextable(sumTable_lo)
 
