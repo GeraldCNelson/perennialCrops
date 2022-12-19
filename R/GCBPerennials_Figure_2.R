@@ -1,6 +1,6 @@
 library(terra)
 library(viridis)
-path <- "data/perennials/"
+path_data <- "data/perennials/"
 speciesChoices <- c("almond_main", "apple_main",  "cherry_main", "olive_main",  "grape_main")
 minArea = 1
 crsRob <-  "+proj=robin"

@@ -20,30 +20,14 @@ crslatlong <- "+proj=longlat +datum=WGS84 +no_defs"
 #coastline data
 coastline <- vect("data-raw/regionInformation/ne_50m_coastline/ne_50m_coastline.shp")
 coastline_cropped <- crop(coastline, extent_noAntarctica )
-
 coastline_cropped_Rob <- project(coastline_cropped, RobinsonProj)
 coastline_cropped_igh <- project(coastline_cropped, GoodeHomolosineProj)
 
 coastline_cropped_Rob_sf <- sf::st_as_sf(coastline_cropped_Rob)
 
-landOnlyMask <- rast(paste0(locOfRawDataFiles, "landseamask.nc")) # 0 is water; 1 is land
+#landOnlyMask <- rast(paste0(locOfRawDataFiles, "landseamask.nc")) # 0 is water; 1 is land
 landOnlyMaskNoAntarctica <- rast(paste0(locOfRawDataFiles, "landseamask_no_antarctica.nc"))
 landOnlyMaskNoAntarctica <- crop(landOnlyMaskNoAntarctica, extent_noAntarctica)
 # Note: the landOnlyMaskNoAntarctica uses 1 for land and 0 for ocean. To use it as a mask do something like the following
-#  y_masked <- mask(y, landOnlyMaskNoAntarctica, maskvalues = 0)
-
-
-# examples of adding a coastline and removing x and y axis labels and legend
-# plot(r_suitable_globe, main = titleText, legend = FALSE, xlab = FALSE, axes=FALSE)
-# plot(coastline_cropped_spvect, add = TRUE)
-
-
-# testing interrupted good homolosine
-
-crsGoode <- "+proj=igh +ellps=sphere +towgs84=0,0,0 +lon_0=100w +x_0=-11119487.43"
-
-# convert spatVector to an sf object
-
-sf::st_as_sf(coastline_cropped)
 
 # degree symbol - "°C"

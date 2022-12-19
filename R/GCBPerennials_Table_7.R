@@ -7,7 +7,7 @@ loChillVarieties <- c("Achak", "Eva", "17GE580", "Chemlali", "No_chill")
 extent_noAntarctica <- ext(-180, 180, -60, 90)
 hemispheres <- c("NH", "SH")
 yearRange <- 19
-path <- "data/perennials/"
+path_data <- "data/perennials/"
 f_getArea <- function(r, layer) {
   r_sub <- subset(r, layer)
   r_sub[r_sub < 1 | r_sub > 1] <- NA # keep only locations with value of 1

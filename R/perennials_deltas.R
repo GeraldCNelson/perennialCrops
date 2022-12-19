@@ -4,7 +4,7 @@ speciesNames <- gsub(varietiesChoiceSuffix, "", speciesChoices)
 # # to figure out what is wrong with olive
 # speciesNames = "olive"
 # source("R/perennialsPrep.R") # creates the data tables majorCropValues_main, majorCropValues_lo and majorCropValues_hi. Included in perennialFunctions.R
-woptList <- list(gdal=c("COMPRESS=DEFLATE", "PREDICTOR=2", "ZLEVEL = 4", "NUM_THREADS=ALL_CPUS"))
+woptList <- list(gdal=c("COMPRESS=DEFLATE", "PREDICTOR=2", "ZLEVEL = 6", "NUM_THREADS=ALL_CPUS"))
 terraOptions(memfrac = 0.9, copies = 1, progress = 10, tempdir="data/ISIMIP", verbose = FALSE) # memfrac = 2, 
 #coastline data
 coastline <- vect("data-raw/regionInformation/ne_50m_coastline/ne_50m_coastline.shp")
