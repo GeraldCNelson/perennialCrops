@@ -19,7 +19,15 @@ Follow the directions to download for tasmin, tas, and tasmax for each of the fi
 
 # Order of operations
 
-Run (or source) the R files in the following order
+## Install libraries
+
+Here's some code to install any of the needed packages that are not already install
+
+`packages <- c("terra", "viridis", "data.table", "flextable", "officer", "crayon", "magrittr", "doParallel", "foreach", "Rcpp", "readxl")`
+`installed_packages <- packages %in% rownames(installed.packages())`
+`if (any(installed_packages == FALSE)) {  install.packages(packages[!installed_packages]) }`
+
+## Run scripts
 
 - chillingCalcs.R - output the chilling portions file stored in data-raw. This will take a long time and the output files are already available. Run only if new versions are needed.
 - perennialCalcs.R  - directions for running are included in the file. Read through the code before sourcing the file
