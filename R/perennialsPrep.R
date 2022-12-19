@@ -57,7 +57,7 @@ deleteListCol <- c("CR_cultivar_min", "CR_cultivar_max", "CR_crop_mean", "CR_cro
 majorCropValues_main[, (deleteListCol) := NULL]
 majorCropValues_lo[, (deleteListCol) := NULL]
 majorCropValues_hi[, (deleteListCol) := NULL]
-write.csv(majorCropValues_main, "data/cmip6/perennials/majorCropValues_main.csv", row.names = FALSE)
-write.csv(majorCropValues_lo, "data/cmip6/perennials/majorCropValues_lo.csv", row.names = FALSE)
-write.csv(majorCropValues_hi, "data/cmip6/perennials/majorCropValues_hi.csv", row.names = FALSE)
+write.csv(majorCropValues_main, "data/perennials/majorCropValues_main.csv", row.names = FALSE)
+write.csv(majorCropValues_lo, "data/perennials/majorCropValues_lo.csv", row.names = FALSE)
+write.csv(majorCropValues_hi, "data/perennials/majorCropValues_hi.csv", row.names = FALSE)
 

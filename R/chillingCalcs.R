@@ -86,7 +86,7 @@ for (l in startYearChoices) {
       names(monthZeroCount) <- month.abb
       fileName_outZero <- paste0("belowZeroCount_", modelName.lower, "_", k, "_", yearSpan, ".tif")
       print(paste0("Writing out ", fileName_outZero))
-      writeRaster(monthZeroCount, filename = paste0("data/cmip6/belowZero/", fileName_outZero),  overwrite = TRUE)
+      writeRaster(monthZeroCount, filename = paste0("data/belowZero/", fileName_outZero),  overwrite = TRUE)
       
       #   rm(list = c("tmax", "tmin"))
       print(system.time(chillHrs.sumMonth <- tapp(chillHrs, indices, fun = sum, na.rm = TRUE)))
@@ -102,8 +102,8 @@ for (l in startYearChoices) {
       fileNameNH <- paste0("chillHrs_NorthernHem_", modelName.lower, "_", k, "_", yearSpan, ".tif")
       fileNameSH <- paste0("chillHrs_SouthernHem_", modelName.lower, "_", k, "_", yearSpan, ".tif")
       
-      writeRaster(chillHrsNorthernHem, filename = paste0("data/cmip6/chillingHours/", fileNameNH),  overwrite = TRUE)
-      writeRaster(chillHrsSouthernHem, filename = paste0("data/cmip6/chillingHours/", fileNameSH),  overwrite = TRUE)
+      writeRaster(chillHrsNorthernHem, filename = paste0("data/chillingHours/", fileNameNH),  overwrite = TRUE)
+      writeRaster(chillHrsSouthernHem, filename = paste0("data/chillingHours/", fileNameSH),  overwrite = TRUE)
     }
   }
 }
@@ -131,14 +131,14 @@ indices <- as.numeric(indices)
 system.time(monthZeroCount <- tapp(tmin, indices, fun = function(x, ...){sum(x <= 0)}, na.rm = TRUE))
 names(monthZeroCount) <- month.abb
 fileName_outZero <- paste0("belowZeroCount", "_observed_", yearSpan, ".tif")
-writeRaster(monthZeroCount, filename = paste0("data/cmip6/belowZero/", fileName_outZero),  overwrite = TRUE)
+writeRaster(monthZeroCount, filename = paste0("data/belowZero/", fileName_outZero),  overwrite = TRUE)
 
 # # now do count above tmax limit
 # f.tmaxLimit <- function(tmax, tmaxLimit, indices) {
 #   tmaxSum <- tapp(tmax, indices, fun = function(x, ...){sum(x >= tmaxLimit)}) 
 #   names(tmaxSum) <- month.abb
 #   fileName_out <- paste0("tmaxGT_", tmaxLimit, "_observed_", yearSpan, ".tif")
-#   writeRaster(tmaxSum, filename = paste0("data/cmip6/tmaxMonthlySums/", fileName_out),  overwrite = TRUE)
+#   writeRaster(tmaxSum, filename = paste0("data/tmaxMonthlySums/", fileName_out),  overwrite = TRUE)
 # }
 # tmaxfunctionStart <- Sys.time()
 # #tmax > 31
@@ -166,7 +166,7 @@ chillHrsSouthernHem <- sum(chillHrsSouthernHem)
 fileNameNH <- paste0("chillHrs_NorthernHem", "_observed_", yearSpan, ".tif")
 fileNameSH <- paste0("chillHrs_SouthernHem", "_observed_", yearSpan, ".tif")
 
-writeRaster(chillHrsNorthernHem, filename = paste0("data/cmip6/chillingHours/", fileNameNH),  overwrite = TRUE)
-writeRaster(chillHrsSouthernHem, filename = paste0("data/cmip6/chillingHours/", fileNameSH),  overwrite = TRUE)
+writeRaster(chillHrsNorthernHem, filename = paste0("data/chillingHours/", fileNameNH),  overwrite = TRUE)
+writeRaster(chillHrsSouthernHem, filename = paste0("data/chillingHours/", fileNameSH),  overwrite = TRUE)
 
 gc(reset = FALSE, full = TRUE)

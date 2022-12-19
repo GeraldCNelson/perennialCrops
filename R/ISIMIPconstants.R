@@ -42,15 +42,15 @@ yearRange <- 19
 
 # file locations -----
 locOfClimFiles <- "climdata/"
-locOfDataFiles_perennials <- "data/cmip6/perennials/"
-locOfCPFiles <- "data/cmip6/chillPortions/chill_portions/"
-locOfDataFiles_THI <- "data/cmip6/THI/"
+locOfDataFiles_perennials <- "data/perennials/"
+locOfCPFiles <- "data/chillPortions/chill_portions/"
+locOfDataFiles_THI <- "data/THI/"
 locOfResultsFiles <- "results/"
 lofOfGraphicsFiles <- "graphics/cmip6/"
 locOfRawDataFiles <- "data-raw/"
 locOfHarvestDataFiles <- "data-raw/crops/HarvestedAreaYield175Crops_Geotiff/GeoTiff/"
-locOfgddsFiles <- "data/cmip6/growingDegreeDays/"
-locOfRunsFiles <- "data/cmip6/runs/"
+locOfgddsFiles <- "data/growingDegreeDays/"
+locOfRunsFiles <- "data/runs/"
 
 # general test values
 modelChoice <-  "IPSL-CM6A-LR"

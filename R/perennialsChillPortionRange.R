@@ -9,4 +9,4 @@ chillPortions[, minValByCrop := min(chillRequirement), by = crop]
 chillPortions[, maxValByCrop := max(chillRequirement), by = crop]
 chillPortions[, c("cultivar", "chillRequirement") := NULL]
 chillPortions <- unique(chillPortions)
-write.csv(chillPortions, "chillPortionRange.csv")
+write.csv(chillPortions, "data/chillPortions/chillPortionRange.csv")

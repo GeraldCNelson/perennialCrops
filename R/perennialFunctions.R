@@ -25,7 +25,7 @@ theme_custom <- function() {
 options(warn = 1)
 # file locations -----
 path_clim <- "climdata/"
-path_gdds <- "data/cmip6/growingDegreeDays/"
+path_gdds <- "data/growingDegreeDays/"
 # constants, general
 
 # choose whether to do the base cps, or the lo or hi cp requirements varieties -----
@@ -562,7 +562,7 @@ f_heatDamage <- function(k, l, speciesName, hem, suitabilityLevel, cropVals) {
 f_combinedDamage <- function(k, l, speciesName, suitabilityLevel, chillLevel) {
   # combine suitability metrics from chill portions, extreme cold, spring frost, and summer heat; locations with value 1 is suitable
   yearSpan <- paste0(l, "_", l + yearRange)
-  path <- "data/cmip6/perennials/"
+  path <- "data/perennials/"
   speciesChoice <- paste0(speciesName, chillLevel)
   #  yearSpan <- paste0(l, "_", l + yearRange)
   # read in all the rasters needed
@@ -572,7 +572,7 @@ f_combinedDamage <- function(k, l, speciesName, suitabilityLevel, chillLevel) {
     extremeColdCt <- rast(paste0(path, "extremeCold_cutoff_", fileTail <- paste0(speciesName, "_", k, "_", hem, "_", yearSpan, ".tif")))
     frostCt <- rast(paste0(path, "frostDamage_", fileTailSuit))
     heatCt <- rast(paste0(path, "heatDamage_", fileTailSuit))
-    chillPortionsCutoff <- rast(paste0("data/cmip6/chillPortions/chill_portions/", "ensemble_chill_cutoff_", paste0(speciesChoice, "_", k, "_", hem, "_", yearSpan, ".tif")))
+    chillPortionsCutoff <- rast(paste0("data/chillPortions/chill_portions/", "ensemble_chill_cutoff_", paste0(speciesChoice, "_", k, "_", hem, "_", yearSpan, ".tif")))
     gdds_suitable <- rast(paste0(path_gdds, "gdds_not_limiting", "_", hem, "_",  speciesName, "_", k, "_", yearSpan, ".tif"))
     
     print(paste0("working on combined damage ", speciesName, " in hemisphere ", hem, ", year ", l, ", scenario ", k))
@@ -649,12 +649,12 @@ f_suitableLocsGraphics <- function(k, l, speciesName, suitabilityLevel) {
     suitcol = "red"}
   
   # this file has 6 layers. The first one is the combined suitable locations. The list of layer names - "combinedSuit"      "extremeColdSuit"   "springFrostSuit"     "heatSuit"          "chillPortionsSuit  gddsSuit"
-  fileName_in <- paste0("data/cmip6/perennials/nonlimiting_all_", speciesName, "_", k, "_", suitabilityLevel, "_", yearSpan, ".tif")
+  fileName_in <- paste0("data/perennials/nonlimiting_all_", speciesName, "_", k, "_", suitabilityLevel, "_", yearSpan, ".tif")
   r_combined <- rast(fileName_in)
   r <- r_combined[[1]]
   # if not historical, get historical suitability for use as background shading
   #    if (!k == "historical") {
-  fileName_hist_suit_in <- paste0("data/cmip6/perennials/nonlimiting_all_", speciesName, "_", "historical", "_", suitabilityLevel, "_", "1991_2010", ".tif")
+  fileName_hist_suit_in <- paste0("data/perennials/nonlimiting_all_", speciesName, "_", "historical", "_", suitabilityLevel, "_", "1991_2010", ".tif")
   r_combined_hist <- rast(fileName_hist_suit_in)
   r_hist <- r_combined_hist[[1]]
   suitableArea_historical <- project(r_hist, crsRob)
@@ -717,18 +717,18 @@ f_suitableLocsGraphics_clean_old <- function(speciesName) {
   # the harvested area data is just for grapes so need to get rid of wine in the names
   #if (speciesName == paste0("winegrape", chillLevel)) speciesName <- "grape"
   
-  k <- "ssp585"; fileName_in_ssp585_mid <- fileName_in <- paste0("data/cmip6/perennials/nonlimiting_all_", speciesName, "_", k, "_", suitabilityLevel, "_", yearSpan_mid, ".tif")
-  k <- "ssp126"; fileName_in_ssp126_mid <- fileName_in <- paste0("data/cmip6/perennials/nonlimiting_all_", speciesName, "_", k, "_", suitabilityLevel, "_", yearSpan_mid, ".tif")
+  k <- "ssp585"; fileName_in_ssp585_mid <- fileName_in <- paste0("data/perennials/nonlimiting_all_", speciesName, "_", k, "_", suitabilityLevel, "_", yearSpan_mid, ".tif")
+  k <- "ssp126"; fileName_in_ssp126_mid <- fileName_in <- paste0("data/perennials/nonlimiting_all_", speciesName, "_", k, "_", suitabilityLevel, "_", yearSpan_mid, ".tif")
   
-  k <- "ssp585"; fileName_in_ssp585_end <- fileName_in <- paste0("data/cmip6/perennials/nonlimiting_all_", speciesName, "_", k, "_", suitabilityLevel, "_", yearSpan_mid, ".tif")
-  k <- "ssp126"; fileName_in_ssp126_end <- fileName_in <- paste0("data/cmip6/perennials/nonlimiting_all_", speciesName, "_", k, "_", suitabilityLevel, "_", yearSpan_mid, ".tif")
+  k <- "ssp585"; fileName_in_ssp585_end <- fileName_in <- paste0("data/perennials/nonlimiting_all_", speciesName, "_", k, "_", suitabilityLevel, "_", yearSpan_mid, ".tif")
+  k <- "ssp126"; fileName_in_ssp126_end <- fileName_in <- paste0("data/perennials/nonlimiting_all_", speciesName, "_", k, "_", suitabilityLevel, "_", yearSpan_mid, ".tif")
   
   r_combined_ssp585_mid <- rast(fileName_in_ssp585_mid, lyrs = 1) 
   r_combined_ssp126_mid <- rast(fileName_in_ssp126_mid, lyrs = 1) 
   r_combined_ssp585_end <- rast(fileName_in_ssp585_end, lyrs = 1) 
   r_combined_ssp126_end <- rast(fileName_in_ssp126_end, lyrs = 1) 
   
-  fileName_hist_suit_in <- paste0("data/cmip6/perennials/nonlimiting_all_", speciesName, "_", "historical", "_", suitabilityLevel, "_", yearSpan_early, ".tif")
+  fileName_hist_suit_in <- paste0("data/perennials/nonlimiting_all_", speciesName, "_", "historical", "_", suitabilityLevel, "_", yearSpan_early, ".tif")
   
   r_combined_hist <- rast(fileName_hist_suit_in, lyrs = 1) 
   suitableArea_historical_rob <- project(r_combined_hist, crsRob)

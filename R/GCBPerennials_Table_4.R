@@ -1,7 +1,7 @@
 # code to produce the GCB perennials paper Table 4.
 library(terra)
 library(data.table)
-path <- "data/cmip6/perennials/nonlimiting_all_"
+path <- "data/perennials/nonlimiting_all_"
 path_harvestFiles <- "data-raw/crops/HarvestedAreaYield175Crops_Geotiff/GeoTiff/"
 
 #source("R/perennialFunctions.R") # loads some functions, packages and some needed constants

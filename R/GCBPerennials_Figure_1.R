@@ -32,11 +32,11 @@ for (speciesChoice in speciesChoices) {
   speciesName <- gsub("_main", "", speciesChoice) # needed for the harvested area data
   harvestArea_earlyCent_rob <- f_harvestArea(speciesName, minArea = 1) 
   
-  inF_hist_suit <- paste0("data/cmip6/perennials/nonlimiting_all_", speciesChoice, "_", "historical", "_", "good", "_", "1991_2010", ".tif")
+  inF_hist_suit <- paste0("data/perennials/nonlimiting_all_", speciesChoice, "_", "historical", "_", "good", "_", "1991_2010", ".tif")
   suitableArea_historical_rob <- rast(inF_hist_suit, lyrs = 1)  |> project(crsRob) 
   suitableArea_historical_rob[suitableArea_historical_rob > 1] <- 1
   suitableArea_historical_rob[suitableArea_historical_rob < 1] <- NA 
-  inF_end_suit_ssp585 <- paste0("data/cmip6/perennials/nonlimiting_all_", speciesChoice, "_", "ssp585", "_", "good", "_", "2081_2100", ".tif")
+  inF_end_suit_ssp585 <- paste0("data/perennials/nonlimiting_all_", speciesChoice, "_", "ssp585", "_", "good", "_", "2081_2100", ".tif")
   suitableArea_end_ssp585_rob <- rast(inF_end_suit_ssp585, lyrs = 1)  |> project(crsRob) 
   suitableArea_end_ssp585_rob[suitableArea_end_ssp585_rob > 1] <- 1
   suitableArea_end_ssp585_rob[suitableArea_end_ssp585_rob < 1] <- NA
