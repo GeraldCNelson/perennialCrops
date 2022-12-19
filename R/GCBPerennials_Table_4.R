@@ -18,7 +18,6 @@ f_getArea <- function(r, layer) {
 f_harvestArea <- function(speciesName, minArea) {
   rInArea <- rast(paste0(path_harvestFiles, speciesName,"/",  speciesName, "_HarvestedAreaHectares.tif"))
   rInArea <- crop(rInArea, extent_noAntarctica)
-  #rInArea_int <- aggregate(rInArea, fact = 3, fun = "sum") # convert 5 arc minutes to 1/4 degrees. Mainly for quality of graphics
   harvestArea_earlyCent <- aggregate(rInArea, fact = 6, fun = "sum") # convert 5 arc minutes to 1/2 degrees
   maskMin <- switch(
     speciesName,
@@ -39,12 +38,7 @@ f_areacalcs <- function(speciesChoice) {
   r_combined_ssp585_end <- rast(paste0(path, speciesChoice, "_", "ssp585", "_", "good", "_", "2081_2100", ".tif"), lyrs = 1)
   suitableArea_historical <- r_combined_hist[[1]]
   
-  # r_combined <- rbind(suitableArea_historical, r_combined_ssp585_end)
-  # 
-  # r_combined$value <- round(r_combined$value, 0)
-  # r_combined[r_combined == 0] <- NA
-  
-  # now get harvested area map
+   # now get harvested area map
   harvestArea_earlyCent <- f_harvestArea(speciesName, minArea = 1)
   harvestArea_earlyCent[harvestArea_earlyCent > 0] <- 1
   harvestArea_earlyCent[harvestArea_earlyCent <= 0] <- NA 

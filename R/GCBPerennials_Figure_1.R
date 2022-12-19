@@ -62,7 +62,6 @@ for (speciesChoice in speciesChoices) {
   polys(globe, col=gray(.99), lwd = .1, alpha = 1)
   plot(harvestArea_earlyCent_rob, add = TRUE, axes = FALSE, col = "gray", legend = FALSE)
   plot(suitableArea_end_ssp585_rob, add = TRUE, axes = FALSE, col = "green3", legend = FALSE, alpha = .3)
- # text(xm, ym, adj = c(0,0), paste0("(", letters[graphCounter], ")"), cex = 1, offset = 1)
   text(xm-xm/8, ym, cex = .8, (bquote(paste((bold(.(letters[graphCounter])))))))
   if (speciesName == "olive") {
     ltext = c("Suitable, end century\n(2081-2100), SSP5-8.5", "Early century\narea")

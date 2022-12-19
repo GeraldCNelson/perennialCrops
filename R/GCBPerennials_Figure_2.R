@@ -35,7 +35,7 @@ for (speciesChoice in speciesChoices) {
   suitable_end_new_lo <- (suitable_end_lo - suitable_end) 
   suitable_end_new_lo[suitable_end_new_lo == -1] <- NA
   suitable_early_recovered <- suitable_early * suitable_end_lo
-   combined <- c(suitable_early, suitable_end, suitable_end_lo, suitable_endNearly, suitable_end_new, suitable_end_new_lo, suitable_early_recovered)
+  combined <- c(suitable_early, suitable_end, suitable_end_lo, suitable_endNearly, suitable_end_new, suitable_end_new_lo, suitable_early_recovered)
   combined[combined == 0 ] <- NA
   combined <- project(combined, crsRob)
   names(combined) <- c("suitable_early_lost", "suitable_end", "suitable_end_lo", "suitable_endNearly", "suitable_end_new", "suitable_end_new_lo", "suitable_early_recovered")
@@ -44,15 +44,12 @@ for (speciesChoice in speciesChoices) {
   
   outf <- paste0("graphics/figure_2_", letters[graphCounter], "_", speciesName, ".pdf")
   pdf(outf)
-  #  width, height)
   plot(grat, col = "gray", background = "azure", lty = 2, mar = c(.1,.1,.1,.1), labels = FALSE)
   polys(globe, col=gray(.99), lwd = .5, alpha = 1)
   plot(combined[[1]], add = TRUE, axes = FALSE, col = colList[[1]], alpha = 1, legend = FALSE) # suitable early
   plot(combined[[4]], add = TRUE, axes = FALSE, col = colList[[2]], legend = FALSE)
   plot(combined[[5]], add = TRUE, axes = FALSE, col = colList[[3]], legend = FALSE)
   plot(combined[[6]], add = TRUE, axes = FALSE, col = colList[[4]], alpha = 1, legend = FALSE) 
- 
-#  text(xm + xm/30, ym-ym/20, adj = c(0,0), paste0("(", bquote(bold.(temp)), ") ", speciesName), cex = 1, offset = 1)
   text(xm-xm/6, ym, cex = 1, (bquote(paste((bold(.(letters[graphCounter])))*' ', .(speciesName)))))
   if (speciesName == "grape") {
     ltext = c("Recent historical \nsuitability lost", "Recent historical\nsuitability retained", "End century\nnew suitable areas", "End century suitable\nareas, low chill portions")

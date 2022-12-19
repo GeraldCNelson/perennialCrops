@@ -8,7 +8,6 @@ source("R/perennialFunctions.R")
   speciesChoices <- unique(cropVals$cropName)
   speciesNames <- gsub(chillLevel, "", speciesChoices) 
   
-  # dt_area <- data.table(species = character(), cultivar = character(), chillPortions = numeric(), hemisphere = character(), quality = character(), ssp = character(),  yearSpan = character(), area_suitable = numeric(), rasterName = character())
   for (chillLevel in c("_lo", "_main")) {
     namelist <- c("species", "cultivar", "chillPortions", "hemisphere", "quality", "ssp", "yearSpan",  "area_suitable", "rasterName")
     dt_area <- data.table(1)[,`:=`((namelist),NA)][,V1:=NULL][.0]
@@ -55,7 +54,6 @@ source("R/perennialFunctions.R")
   }
 }
 
-# dt_area_delta <- data.table(species = character(), cultivar = character(), chillPortions = numeric(), hemisphere = character(), ssp = character(), yearSpan = character(), quality = character(), area_base = numeric(), area_ssp = numeric(), area_both = numeric(), area_hist_loss = numeric(),  area_ssp_gain = numeric(), area_ssp_gain_lo = numeric())
 # code below comes from https://stackoverflow.com/questions/37376398/how-to-create-an-empty-datatable-with-columns-names-and-then-append-datatables-t
 {
   for (chillLevel in c("_lo", "_main"))
@@ -84,7 +82,6 @@ source("R/perennialFunctions.R")
           for (k in sspChoices) {
             filename_r_ssp_in <- paste0(path_data, "nonlimiting_all_", speciesChoice, "_",  k, "_", suitabilityLevel, "_", hem, "_", yearSpan, ".tif")
             r_ssp_combinedSuit <- rast(filename_r_ssp_in, lyrs = "combinedSuit")
-            #r_ssp_combinedSuit[r_ssp_combinedSuit == 0] <- NA
             r_sum <- r_ssp_combinedSuit + r_historical_combinedSuit # 2 - in both periods, 1 in 1 of the periods, 0 not in either
             r_both <- r_sum; r_both[!r_both == 2] <- NA # get area only for pixels with value of 2
             r_both <- r_both/2 # convert to 1/NA
@@ -107,10 +104,6 @@ source("R/perennialFunctions.R")
             area_ssp_gain <- f_getArea(r_ssp_gain, layer = 1)
             area_ssp_lo <- f_getArea(r_ssp_lo, layer = 1)
             area_ssp_gain_lo <- f_getArea(r_ssp_gain_lo, layer = 1)
-            
-            #      delta_ratio <- 100 * r_delta_area/area_base # added 100 * here to convert to percent November 9, 2021
-            # convert areas to 000 sq km
-            #         area_ssp <- area_ssp/1000; area_both <- area_both/1000; area_hist_loss <- area_hist_loss/1000; area_ssp_gain <- area_ssp_gain/1000 - now done in f_getArea
             dt_area_delta <- rbind(dt_area_delta, list(speciesChoice, cultivar, CPfruit, hem, suitabilityLevel, k, yearSpan, area_base, area_ssp, area_both, area_hist_loss, area_ssp_gain, area_ssp_gain_lo))
           }
           test <- c(r_base, r_ssp, r_hist_loss, r_ssp_gain, r_ssp_lo, r_ssp_gain_lo)
@@ -131,8 +124,6 @@ source("R/perennialFunctions.R")
 # harvest and suitability area calcs ------
 # area common to mid and end century -----
 for (chillLevel in c("_lo", "_main")) {
-  # dt_area_common_end <- dt_area_common_mid <- data.table(species = character(), cultivar = character(), chillPortions = numeric(), ssp = character(), hemisphere = character(), yearSpan = character(), area_common = numeric())
-  
   namelist <- c("species", "cultivar", "chillPortions", "hemisphere",  "ssp", "yearSpan", "area_common")
   dt_area_common_mid <- data.table(1)[,`:=`((namelist),NA)][,V1 := NULL][.0]
   dt_area_common_mid[, area_common := as.numeric(area_common)]
@@ -144,19 +135,7 @@ for (chillLevel in c("_lo", "_main")) {
     CPfruit <- cropVals[cropName == speciesChoice, chill_portions]
     cultivar <-  cropVals[cropName == speciesChoice, cultivar]
     
-    # Oct 4, 2022, changing from using early century harvest area to the area of the recent historical suitable area. This makes the comparisons based on like data sets
-    # use of early century harvest area commented out
-    # fileName_in <- paste0(locOfHarvestDataFiles, speciesName,"/",  speciesName, "_HarvestedAreaHectares.tif")
-    # rInArea <- rast(fileName_in)
-    # harvestArea_earlyCent <- aggregate(rInArea, fact = 6, fun = "sum") # convert 5 arc minutes to 1/2 degrees
-    # # crop to no Antarctica
-    # harvestArea_earlyCent <- crop(harvestArea_earlyCent, extent_noAntarctica)
-    # harvestArea_earlyCent <- mask(harvestArea_earlyCent, landOnlyMaskNoAntarctica, maskvalues = 0)   # mask to land only, probably not needed
-    # harvestArea_earlyCent <- f_harvestArea(speciesName, minArea = 1)
-    # harvestArea_earlyCent[harvestArea_earlyCent > 0] <- 1
-    # harvestArea_earlyCent_NH <- crop(harvestArea_earlyCent, extent_NH) 
-    # harvestArea_earlyCent_SH <- crop(harvestArea_earlyCent, extent_SH)
-    #suitable areas -----
+  #suitable areas -----
     # suitable area end century
     fileName_start <- paste0(path_data, "nonlimiting_all_", speciesChoice, "_")
     
@@ -165,7 +144,6 @@ for (chillLevel in c("_lo", "_main")) {
     fileName_in_historical_NH <- paste0(fileName_start, "historical", "_", suitabilityLevel, "_", "NH", "_", "1991_2010", ".tif")
     suitableArea_historical_SH <- rast(fileName_in_historical_SH, lyrs = "combinedSuit")
     suitableArea_historical_NH <- rast(fileName_in_historical_NH, lyrs = "combinedSuit")
-    
     
     fileName_in_ssp126_SH_end <- paste0(fileName_start, "ssp126", "_", suitabilityLevel, "_", "SH", "_", "2081_2100", ".tif")
     fileName_in_ssp126_NH_end <- paste0(fileName_start, "ssp126", "_", suitabilityLevel, "_", "NH", "_", "2081_2100", ".tif")
@@ -195,10 +173,7 @@ for (chillLevel in c("_lo", "_main")) {
     suitableArea_ssp126_end <- merge(suitableArea_ssp126_SH_end, suitableArea_ssp126_NH_end)
     suitableArea_ssp585_end <- merge(suitableArea_ssp585_SH_end, suitableArea_ssp585_NH_end)
     
-    # r_combined_ssp126_mid <- c(harvestArea_earlyCent, suitableArea_ssp126_mid)
-    # r_combined_ssp585_mid <- c(harvestArea_earlyCent, suitableArea_ssp585_mid)
-    
-    commonArea_ssp126_NH_mid <- suitableArea_ssp126_NH_mid * suitableArea_historical_NH 
+   commonArea_ssp126_NH_mid <- suitableArea_ssp126_NH_mid * suitableArea_historical_NH 
     commonArea_ssp126_SH_mid <- suitableArea_ssp126_SH_mid * suitableArea_historical_SH
     commonArea_ssp585_NH_mid <- suitableArea_ssp585_NH_mid * suitableArea_historical_NH 
     commonArea_ssp585_SH_mid <- suitableArea_ssp585_SH_mid * suitableArea_historical_SH
@@ -223,10 +198,7 @@ for (chillLevel in c("_lo", "_main")) {
   dt_area_common <- rbind(dt_area_common_mid, dt_area_common_end)
   dt_area_common[, ssp_year := paste0(ssp, "_", yearSpan)]
   dt_area_common[, yearSpan := NULL]
-  # fileName_out <- paste0(path_data, "areaCalcs_common", "_", k, chillLevel, ".csv")
-  # write.csv(dt_area_common, file = fileName_out, row.names = FALSE)
-  # print(paste0("fileName out: ", fileName_out))
-  
+
   # create table of area changes ------
   dt_area <- as.data.table(read.csv(file = paste0(path_data, "areaCalcs", chillLevel, ".csv")))
   dt_area[,ssp_year := paste0(ssp, "_", yearSpan)]
@@ -240,11 +212,6 @@ for (chillLevel in c("_lo", "_main")) {
   
   rInArea <- rast(fileName_in)
   harvestArea_earlyCent <- aggregate(rInArea, fact = 6, fun = "sum") # convert 5 arc minutes to 1/2 degrees
-  
-  # convert units
-  # colsToConvert <- c("historical_1991_2010", sspNames, sspNames_new)
-  # combined[, (colsToConvert) := lapply(.SD, '/', 1000), .SDcols = (colsToConvert)] # convert to 1000 sq km
-  # added 100 * below to convert to percent Nov 9, 2021
   
   combined[, ratioMid2Early_126 := 100 * (-1 + ssp126_2041_2060/historical_1991_2010)]
   combined[, ratioEnd2Early_126 := 100 * (-1 + ssp126_2081_2100/historical_1991_2010)]
@@ -438,12 +405,6 @@ save_as_docx(sumTable_lo_flex_area, values = NULL, path = "results/flextable_are
 #ratios only flextable -----
 col_keys_ratios = c("species", "cultivar", "hemisphere", names(sumTable_lo)[grepl("ratio", names(sumTable_lo), fixed = TRUE)])
 sumTable_lo_flex_ratios <- flextable(sumTable_lo, col_keys = col_keys_ratios)
-# typology_ratios <- data.frame(
-#   col_keys = col_keys_ratios,
-#   measure = c("Species", "Cultivar", "Hemi-\nsphere", #3
-#               "Mid to historical, SSP1-2.6", "Mid to historical, SSP5-8.5", "End to historical, SSP1-2.6", "End to historical, SSP5-8.5", "Common to early recent historical, SSP1-2.6", "Common to early recent historical, SSP5-8.5", 
-#               "Loss of early to SSP1-2.6", "Loss of early to SSP5-8.5"), #6
-#   stringsAsFactors = FALSE )
 typology_ratios <- data.frame(
   col_keys = col_keys_ratios,
   measure = c("Species", "Cultivar", "Hemi-\nsphere", #3

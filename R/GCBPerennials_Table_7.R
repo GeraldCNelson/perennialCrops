@@ -104,9 +104,7 @@ f_getArea <- function(r, layer) {
         # use just end of century and ssp585
         l <- 2081; 
         k <- "ssp585"
-        #      for (l in startYearChoices) {
         yearSpan <- paste0(l, "_", l + yearRange)
-        #     for (k in sspChoices) {
         filename_r_ssp_in <- paste0(path, "nonlimiting_all_", paste0(speciesName, chillLevel), "_",  k, "_", "good", "_", hem, "_", "2081_2100", ".tif")
         r_ssp_combinedSuit <- rast(filename_r_ssp_in, lyrs = "combinedSuit")
         r_sum <- r_ssp_combinedSuit + r_historical_combinedSuit # 2 - in both periods, 1 in 1 of the periods, 0 not in either
@@ -133,11 +131,6 @@ f_getArea <- function(r, layer) {
         area_ssp_gain_lo <- f_getArea(r_ssp_gain_lo, layer = 1)
         
         dt_area_delta <- rbind(dt_area_delta, list(speciesChoice, cultivar, CPfruit, hem, "good", k, yearSpan, area_base, area_ssp, area_both, area_hist_loss, area_ssp_gain, area_ssp_gain_lo))
-        # test <- c(r_base, r_ssp, r_hist_loss, r_ssp_gain, r_ssp_lo, r_ssp_gain_lo)
-        # names(test) <- c("r_base", "r_ssp", "r_hist_loss", "r_ssp_gain", "r_ssp_lo", "r_ssp_gain_lo")
-        # fileName_various_out <- paste0(path, speciesName, "_", "areaSuitabilityCombos", "_", hem, ".tif")
-        # writeRaster(test, filename = fileName_various_out, overwrite = TRUE)
-        # print(paste0("fileName_various_out: ", fileName_various_out))
       }
     }
   }
@@ -149,8 +142,6 @@ f_getArea <- function(r, layer) {
 # harvest and suitability area calcs ------
 # area common to mid and end century -----
 for (chillLevel in c("_lo", "_main")) { 
-  # dt_area_common_end <- dt_area_common_mid <- data.table(species = character(), cultivar = character(), chillPortions = numeric(), ssp = character(), hemisphere = character(), yearSpan = character(), area_common = numeric())
-  
   namelist <- c("species", "cultivar", "chillPortions", "hemisphere",  "ssp", "yearSpan", "area_common")
   dt_area_common_end <-  data.table(1)[,`:=`((namelist),NA)][,V1 := NULL][.0]
   dt_area_common_end[, area_common := as.numeric(area_common)]
@@ -202,7 +193,6 @@ for (chillLevel in c("_lo", "_main")) {
   dt_area[, c("quality", "rasterName",  "yearSpan") := NULL]
   dt_area_wide <-        dcast(dt_area,        species + cultivar + chillPortions + hemisphere  ~ ssp_year, value.var = "area_suitable")
   dt_area_common_wide <- dcast(dt_area_common, species + cultivar + chillPortions + hemisphere ~ ssp_year, value.var = "area_common")
-  #  sspNames <- c("ssp126_2041_2060", "ssp126_2081_2100", "ssp585_2041_2060", "ssp585_2081_2100")
   sspNames <- c("ssp126_2081_2100", "ssp585_2081_2100")
   sspNames_new = paste0(sspNames, "_common")
   setnames(dt_area_common_wide, old = sspNames, new = sspNames_new)
@@ -214,10 +204,8 @@ for (chillLevel in c("_lo", "_main")) {
   combined[, ratioEndCommon2Early_585 := 100 * (ssp585_2081_2100_common/historical_1991_2010)]
   combined[, ratioLossEnd2Early_126 := 100 * ((historical_1991_2010 - ssp126_2081_2100)/historical_1991_2010)]
   combined[, ratioLossEnd2Early_585 := 100 * ((historical_1991_2010 - ssp585_2081_2100)/historical_1991_2010)]
-#   ratioColumns <- c("ratioEnd2Early_126",  "ratioEnd2Early_585",  "ratioEndCommon2Early_126",  "ratioEndCommon2Early_585", "ratioLossEnd2Early_126", "ratioLossEnd2Early_585")
     sumColumns <- c("historical_1991_2010",  "ssp126_2081_2100", "ssp585_2081_2100", "ssp126_2081_2100_common", "ssp585_2081_2100_common")
   ssp126Columns <- c("ratioEnd2Early_126", "ratioEndCommon2Early_126", "ratioLossEnd2Early_126") 
-#  combined[, (ratioColumns) := round(.SD, 1), .SDcols = ratioColumns]
   combined[, (sumColumns) := round(.SD, 0), .SDcols = sumColumns]
   out_f <- paste0(path, "sumTable", chillLevel, ".csv")
   write.csv(combined, file = out_f, row.names = FALSE)
@@ -246,7 +234,6 @@ typology_area <- data.frame(
 
 sumTable_main_flex_area <- set_header_df(sumTable_main_flex_area, mapping = typology_area)
 sumTable_main_flex_area <- merge_h(sumTable_main_flex_area, part = "header")
-# sumTable_main_flex_area <- merge_v(sumTable_main_flex_area, j = c("species", "cultivar", "hemisphere", "ratioMid2Early_585"), part = "header")
 sumTable_main_flex_area <- theme_vanilla(sumTable_main_flex_area)
 sumTable_main_flex_area <- fix_border_issues(sumTable_main_flex_area)
 sumTable_main_flex_area <- autofit(sumTable_main_flex_area)
