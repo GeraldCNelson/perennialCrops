@@ -21,9 +21,9 @@ for (speciesChoice in speciesChoices) {
   colList <- c("#D55E00", "#56B4E9", "#009E73", "#F0E442") # orange, blue, green, yellow
   
   # suitable locs in each period, note that these files have the whole planet, not by hemisphere
-  suitable_early <- rast(paste0(path, "nonlimiting_all_", speciesChoice, "_",  "historical", "_", "good", "_", "1991_2010", ".tif"), lyrs = "combinedSuit") 
-  suitable_end <-rast( paste0(path, "nonlimiting_all_", speciesChoice, "_",                  "ssp585", "_", "good", "_", "2081_2100", ".tif"), lyrs = "combinedSuit") 
-  suitable_end_lo <- rast(paste0(path, "nonlimiting_all_", paste0(speciesName, "_lo"), "_",  "ssp585", "_", "good", "_", "2081_2100", ".tif"), lyrs = "combinedSuit") 
+  suitable_early <- rast(paste0(path_data, "nonlimiting_all_", speciesChoice, "_",  "historical", "_", "good", "_", "1991_2010", ".tif"), lyrs = "combinedSuit") 
+  suitable_end <-rast( paste0(path_data, "nonlimiting_all_", speciesChoice, "_",                  "ssp585", "_", "good", "_", "2081_2100", ".tif"), lyrs = "combinedSuit") 
+  suitable_end_lo <- rast(paste0(path_data, "nonlimiting_all_", paste0(speciesName, "_lo"), "_",  "ssp585", "_", "good", "_", "2081_2100", ".tif"), lyrs = "combinedSuit") 
   
   suitable_endNearly <- suitable_early * suitable_end 
   suitable_end_new <- (suitable_end - suitable_early) # has values of -1, 0, and 1. One is new suitable land end century, -1 is loss of suitable land
