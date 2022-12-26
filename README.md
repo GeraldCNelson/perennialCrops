@@ -29,7 +29,7 @@ Here's some code to install any of the needed packages that are not already inst
 
 The two figures for the paper use the pdf graphics driver built in to base R. The code used to produce Figure 1 and Figure 2 also uses the pdfcrop program to trim the white spaces around the edges of the pdf. 
 
-For Mac users, run this code from a terminal to install pdfcrop. This uses the homebrew system (https://brew.sh). A plug - homebrew is a really nice way to manage all sorts of code that the MacOS should have but doesn't.
+For Mac users, run this code from a terminal to install pdfcrop. This uses the homebrew system (https://brew.sh). A plug - homebrew is a really nice way to manage all sorts of code that the MacOS should have but doesn't. It also works for linux users.
 `brew install --cask mactex`
 
 For windows users. I have found these directions but can't verify them

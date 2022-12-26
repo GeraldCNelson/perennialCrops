@@ -318,11 +318,8 @@ getChillSpatial <- function(years, lat, JDay, tmin, tmax, template, writeToDisk=
 }
 
 getChillWorld <- function(scenario, model, year_range) {
-  # convert year_range to vector
-  # years <- year_range[1]:year_range[length(year_range)-1] # added in the -1 to allow for northern hemisphere dormancy running over 2 calendar years
-  # message(years)
   # get data files from scenario and model arguments
-  dat.dir <- paste0('data/bigFiles/', scenario, '/')
+  dat.dir <- paste0('data-raw/climdata/', scenario, '/')
   dat.files <- list.files(dat.dir, pattern=model, recursive=TRUE, full.names = TRUE)
   dat.files <- grep('xml', dat.files, invert = TRUE, value = TRUE)
   # dat.files <- grep(year_range, dat.files, invert = TRUE, value = TRUE)
@@ -393,7 +390,7 @@ getChillWorld <- function(scenario, model, year_range) {
   t1 <- t-proc.time()
   t1/60
   
-  dir.create(paste0('../../chillPortions/worldchill/chill_portions/', scenario, '/', model, '/', year_range[10]), recursive = TRUE)
+  dir.create(paste0('data/chill_portions/', scenario, '/', model, '/', year_range[10]), recursive = TRUE)
   
   # chill_portions.north.raster <- rast(stack(lapply(chill_portions.north, raster)))
   
@@ -401,7 +398,7 @@ getChillWorld <- function(scenario, model, year_range) {
   
   
   writeRaster(chill_portions.north.raster,
-              paste0('../../chillPortions/worldchill/chill_portions/',
+              paste0('data/chill_portions/',
                      scenario, '/', model, '/', scenario, '_', model, '_', year_range[10], '_', 'chill_portions_north.tif'),
               overwrite=TRUE)
   
@@ -411,14 +408,14 @@ getChillWorld <- function(scenario, model, year_range) {
   #### run calculations on southern hemisphere ####
   
   if(all(year_range==1991:2010)) {
-    tmin.in <- rast(tmin.files[1]) # %>% aggregate(fact=2)
-    tmax.in <- rast(tmax.files[1]) # %>% aggregate(fact=2)
+    tmin.in <- rast(tmin.files[1])
+    tmax.in <- rast(tmax.files[1])
   } else if (all(year_range==2041:2060)) {
-    tmin.in <- rast(tmin.files[1]) # %>% aggregate(fact=2)
-    tmax.in <- rast(tmax.files[1]) # %>% aggregate(fact=2)
+    tmin.in <- rast(tmin.files[1])
+    tmax.in <- rast(tmax.files[1])
   } else if(all(year_range==2081:2100)) {
-    tmin.in <- rast(tmin.files[2]) # %>% aggregate(fact=2)
-    tmax.in <- rast(tmax.files[2]) # %>% aggregate(fact=2)
+    tmin.in <- rast(tmin.files[2])
+    tmax.in <- rast(tmax.files[2])
   } else {
     stop("Unsupported year range specified.")
   }
@@ -452,10 +449,10 @@ getChillWorld <- function(scenario, model, year_range) {
   
   chill_portions.south.raster <- rast(stack(chill_portions.south))
   writeRaster(chill_portions.south.raster,
-              paste0('../../chillPortions/worldchill/chill_portions/',
+              paste0('data/chill_portions/',
                      scenario, '/', model, '/', scenario, '_', model, '_', year_range[10], '_', 'chill_portions_south.tif'),
               overwrite=TRUE)
-  rm(hourly_temps.south, tmin.south, tmax.south)
+  rm(tmin.south, tmax.south)
   gc()
   
   # # stitch northern and southern hemisphere rasters together
@@ -468,7 +465,7 @@ getChillWorld <- function(scenario, model, year_range) {
   # })
   # 
   # writeRaster(rast(stack(world)), 
-  #             paste0('../../chillPortions/worldchill/chill_portions/', 
+  #             paste0('data/chill_portions/', 
   #                    scenario, '/', model, '/', scenario, '_', model, '_', year_range[10], '_', 'chill_portions_world.tif'),
   #             overwrite=TRUE)
   # 
@@ -480,26 +477,12 @@ getChillWorld <- function(scenario, model, year_range) {
 MHT <- function (dates.cell, Day_times.cell, keep_sunrise_sunset = FALSE) 
 {
   if(!is.null(dates.cell)) {
-    # if (missing(latitude)) 
-    #   stop("'latitude' not specified")
-    # if (length(latitude) > 1) 
-    #   stop("'latitude' has more than one element")
-    # if (!is.numeric(latitude)) 
-    #   stop("'latitude' is not numeric")
-    # if (latitude > 90 | latitude < (-90)) 
-    #   warning("'latitude' is usually between -90 and 90")
-    
     year_file <- dates.cell
     year_file <- year_file[which(!is.na(year_file$Tmin) & !is.na(year_file$Tmax)),]
     year_file <- year_file[2:(nrow(year_file)-1),]
-    
-    # if (!"JDay" %in% colnames(year_file)) 
-    #   year_file[, "JDay"] <- strptime(paste(year_file$Month, 
-    #                                         "/", year_file$Day, "/", year_file$Year, 
-    #                                         sep = ""), "%m/%d/%Y")$yday + 1
+
     preserve_columns <- colnames(year_file)
     Day_times <- Day_times.cell
-    
     
     Day_times$Sunrise[which(Day_times$Sunrise == 99)] <- 0
     Day_times$Sunrise[which(Day_times$Sunrise == -99)] <- 12
@@ -547,6 +530,7 @@ MHT <- function (dates.cell, Day_times.cell, keep_sunrise_sunset = FALSE)
            log(24 - (year_file$Sunset[c_eve] - year_file$next_Sunrise[c_eve]) + 
                  1) * log(hour - year_file$Sunset[c_eve] + 1))
     }
+    
     colnames(year_file)[(ncol(year_file) - 23):(ncol(year_file))] <- c(paste("Hour_", 0:23, sep = ""))
     if (!keep_sunrise_sunset) 
       year_file <- year_file[, c(preserve_columns, paste("Hour_", 0:23, sep = ""))]

@@ -18,46 +18,48 @@ source('R/chillSpatial_functions.R')
 plan(multiprocess, workers=3, gc=TRUE)
 
 # Rcpp.package.skeleton('CP', cpp_files = '../../chillPortions/global_chill/Cpp/chill_func.cpp')
-# devtools::install('CP')
-# require(CP)
 
-# models <- tolower(c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL"))
-# scenarios <- c("historical", "ssp126", "ssp585")
+Rcpp.package.skeleton('CP', cpp_files = 'R/Cpp/chill_func.cpp')
+devtools::install('CP')
+require(CP)
 
-# an alternative approach is some nested for loops that replace all the individaul lines of code below
-source("R/ISIMIPconstants.R") # loads a bunch of constants
-
-# # chill portions, scenarios -----
-# for (k in sspChoices) {
-#   message(k)
-#   for (l in startYearChoices) {
-#     yearSpan <- l:as.numeric(paste0(l + yearRange))
-#     message(paste0(' ', l))
-#     for (modelChoice in modelChoices_lower) {
-#     message(paste0('  ', modelChoice))
-#     try(getChillWorld(scenario = k, model = modelChoice, year_range = yearSpan))
-#     # cpName <- paste0(k, "_", modelChoice)
-#     # assign(cpName, cp)
-#     }
-#   }
-# }
+# # models <- tolower(c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL"))
+# # scenarios <- c("historical", "ssp126", "ssp585")
 # 
-# # chill portions, historical -----
-# k <- "historical"
-# l <- 1991
-#   for (l in startYearChoices) {
-#     yearSpan <- l : as.numeric(paste0(l + yearRange))
-#     for (modelChoice in modelChoices_lower) {
-#       cp <- getChillWorld(scenario=k, model=modelChoice, year_range=yearSpan)
-#       cpName <- paste0(k, "_", modelChoice)
-#       assign(cpName, cp)
-#     }
-# }
-#     
-# t1 <- proc.time()
-# cp <- getChillWorld(scenario=k, model=modelChoice, year_range=yearSpan)
-# t2 <- t1-proc.time()
-# t2
+# # an alternative approach is some nested for loops that replace all the individaul lines of code below
+# source("R/ISIMIPconstants.R") # loads a bunch of constants
+# 
+# # # chill portions, scenarios -----
+# # for (k in sspChoices) {
+# #   message(k)
+# #   for (l in startYearChoices) {
+# #     yearSpan <- l:as.numeric(paste0(l + yearRange))
+# #     message(paste0(' ', l))
+# #     for (modelChoice in modelChoices_lower) {
+# #     message(paste0('  ', modelChoice))
+# #     try(getChillWorld(scenario = k, model = modelChoice, year_range = yearSpan))
+# #     # cpName <- paste0(k, "_", modelChoice)
+# #     # assign(cpName, cp)
+# #     }
+# #   }
+# # }
+# # 
+# # # chill portions, historical -----
+# # k <- "historical"
+# # l <- 1991
+# #   for (l in startYearChoices) {
+# #     yearSpan <- l : as.numeric(paste0(l + yearRange))
+# #     for (modelChoice in modelChoices_lower) {
+# #       cp <- getChillWorld(scenario=k, model=modelChoice, year_range=yearSpan)
+# #       cpName <- paste0(k, "_", modelChoice)
+# #       assign(cpName, cp)
+# #     }
+# # }
+# #     
+# # t1 <- proc.time()
+# # cp <- getChillWorld(scenario=k, model=modelChoice, year_range=yearSpan)
+# # t2 <- t1-proc.time()
+# # t2
 
 models <- tolower(c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL"))
 scenarios <- c("historical", "ssp126", "ssp585")
