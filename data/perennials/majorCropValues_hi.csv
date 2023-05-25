@@ -1,0 +1,6 @@
+"cropName","cultivar","frost_threshold","low_temp_threshold","summer_heat_threshold","gdd","gddtb","GDD_opt","chill_portions"
+"almond_hi","Tardona",-2,-16,45,2750,4.5,25,56
+"apple_hi","Hi Early",-2,-30,35,1450,5,25,77
+"cherry_hi","Fertard",-2,-30,35,1100,5,25,108
+"olive_hi","Moraiolo",-2,-12,45,1500,10,25,82
+"grape_hi","Chardonnay",-2,-22,35,1100,10,25,9

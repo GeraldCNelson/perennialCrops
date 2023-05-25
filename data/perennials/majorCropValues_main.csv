@@ -1,0 +1,6 @@
+"cropName","cultivar","frost_threshold","low_temp_threshold","summer_heat_threshold","gdd","gddtb","GDD_opt","chill_portions"
+"almond_main","Nonpareil",-2,-16,45,2750,4.5,25,22.9
+"apple_main","Gala",-2,-30,35,1450,5,25,47.3
+"cherry_main","Lapins",-2,-25,35,1100,5,25,50.1
+"olive_main","Picual",-2,-12,40,1500,10,25,42
+"grape_main","Chardonnay",-2,-22,35,1100,10,25,9

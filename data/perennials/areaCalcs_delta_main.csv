@@ -1,0 +1,11 @@
+"species","cultivar","chillPortions","hemisphere","quality","ssp","yearSpan","area_base","area_ssp","area_both","area_hist_loss"," area_ssp_gain","area_ssp_gain_lo"
+"almond_main","Nonpareil",22.9,"NH","good","ssp585","2081_2100",17410,26392,10361,7049,16031,5071
+"almond_main","Nonpareil",22.9,"SH","good","ssp585","2081_2100",6266,2597,1574,4692,1023,3925
+"apple_main","Gala",47.3,"NH","good","ssp585","2081_2100",13457,17681,4849,8608,12831,1039
+"apple_main","Gala",47.3,"SH","good","ssp585","2081_2100",3915,2085,1180,2736,905,1392
+"cherry_main","Lapins",50.1,"NH","good","ssp585","2081_2100",13514,18199,5017,8497,13182,743
+"cherry_main","Lapins",50.1,"SH","good","ssp585","2081_2100",3962,2269,1269,2693,999,1175
+"olive_main","Picual",42,"NH","good","ssp585","2081_2100",13621,21706,5771,7850,15934,6740
+"olive_main","Picual",42,"SH","good","ssp585","2081_2100",3195,1376,612,2582,764,1528
+"grape_main","Chardonnay",9,"NH","good","ssp585","2081_2100",13712,16431,3652,10060,12779,1070
+"grape_main","Chardonnay",9,"SH","good","ssp585","2081_2100",6168,2835,1624,4544,1211,1081

@@ -54,17 +54,17 @@
     r.mean_copy <-r.mean
     cplimit <- cropVals[cropName == speciesChoice, chill_portions]
     print(paste0("working on ssp: ", k, ", start year ", l, ", hemisphere ", hem, ", crop ", speciesChoice, ", cplimit: ", cplimit))
-    fileName_out <- paste0(locOfCPFiles, "ensemble_chill_cutoff_", speciesChoice, "_", k, "_", hem, "_", yearSpan, ".tif")
+    outF <- paste0(locOfCPFiles, "ensemble_chill_cutoff_", speciesChoice, "_", k, "_", hem, "_", yearSpan, ".tif")
     r.mean_copy[r.mean_copy < cplimit] <- 0 # not suitable
     r.mean_copy[r.mean_copy >= cplimit] <- 1 # suitable
     print(r.mean_copy)
     titleText <- paste0("ensemble_chill_cutoff_", speciesChoice, "_", k, "_", hem, "_", yearSpan)
     plot(r.mean_copy, main = titleText)
-    print(system.time(writeRaster(r.mean_copy, filename = fileName_out, overwrite = TRUE, wopt = woptList)))
-    print(paste0("fileName out: ", fileName_out))
+    print(system.time(writeRaster(r.mean_copy, filename = outF, overwrite = TRUE, wopt = woptList)))
+    print(paste0("fileName out: ", outF))
     maxVal <- round(max(minmax(r)), 2)
     minVal <- round(min(minmax(r)), 2)
-    cat(paste0(red("species: ", speciesChoice, ", ensemble ssp: ", k, ", start year: ", l, ", minVal ", minVal,  ", maxVal ", maxVal, ", fileName out: ", fileName_out), "\n\n"))
+    cat(paste0(red("species: ", speciesChoice, ", ensemble ssp: ", k, ", start year: ", l, ", minVal ", minVal,  ", maxVal ", maxVal, ", fileName out: ", outF), "\n\n"))
   }
   
   f_chillPortionsGraphs <- function(k, l) {
@@ -98,10 +98,10 @@
       theme(panel.background = element_rect(fill = "aliceblue")) +
       NULL
     print(g)
-      fileName_out <- paste0(lofOfGraphicsFiles, "chillPortions/ChillPortions", "_", k, "_", yearSpan, ".png")
-    ggsave(filename = fileName_out, plot = g, width = 6, height = 6, units = "in", dpi = 300)
-    knitr::plot_crop(fileName_out)
-    print(paste0("file name out: ", fileName_out))
+      outF <- paste0(lofOfGraphicsFiles, "chillPortions/ChillPortions", "_", k, "_", yearSpan, ".png")
+    ggsave(filename = outF, plot = g, width = 6, height = 6, units = "in", dpi = 300)
+    knitr::plot_crop(outF)
+    print(paste0("file name out: ", outF))
     g <- NULL
     
     # graphics for species-specific cutoff
@@ -139,10 +139,10 @@
         ) +
         NULL
       print(g)
-      fileName_out <- paste0(lofOfGraphicsFiles, "chillPortions/adeqChillPortions_", speciesChoice, "_", k, "_", yearSpan, ".png")
-      ggsave(filename = fileName_out, plot = g, width = 6, height = 6, units = "in", dpi = 300)
-      knitr::plot_crop(fileName_out)
-      print(paste0("file name out: ", fileName_out))
+      outF <- paste0(lofOfGraphicsFiles, "chillPortions/adeqChillPortions_", speciesChoice, "_", k, "_", yearSpan, ".png")
+      ggsave(filename = outF, plot = g, width = 6, height = 6, units = "in", dpi = 300)
+      knitr::plot_crop(outF)
+      print(paste0("file name out: ", outF))
       g <- NULL
     }
   }

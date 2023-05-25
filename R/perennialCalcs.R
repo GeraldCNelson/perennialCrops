@@ -34,7 +34,9 @@ k <- "ssp585"
 l <- 2081
 speciesName <- "apple"
 hem <- "NH"
-
+suitabilityLevel = "good"
+modelChoice <- "GFDL-ESM4"
+chillLevel <- "_lo"
 # Note: that the difference between _lo and _main is just in the chill portions for the crops
 
 {
@@ -60,13 +62,13 @@ hem <- "NH"
     for (speciesName in speciesNames) {
       for (k in sspChoices) {
         for (l in startYearChoices) {
-          f_heatDamage(k, l, speciesName, hem, modelChoices_lower, suitabilityLevel, cropVals)
+          f_heatDamage(k, l, modelChoices_lower, speciesName, hem, suitabilityLevel, cropVals)
         }
       }
       # historical
       k <- "historical"
       l <- 1991
-      f_heatDamage(k, l, speciesName, hem, modelChoices_lower, suitabilityLevel, cropVals)
+      f_heatDamage(k, l, modelChoices_lower, speciesName, hem, suitabilityLevel, cropVals)
     }
   }
   
@@ -105,20 +107,21 @@ hem <- "NH"
       print(system.time(f_computeGDDs(k, l, speciesName, modelChoice, topt_min, topt_max)))
     }
   }
-}
-# runs files -----
-# uses runsParms created in perennialFunctions.R which is sourced above
-# scenarios
-for (modelChoice in modelChoices_lower) {
-  for (k in sspChoices) {
-    for (l in startYearChoices) {
-      f_runsSetup(k, l, modelChoice, runsParms)
+  
+  # runs files -----
+  # uses runsParms created in perennialFunctions.R which is sourced above
+  # scenarios
+  for (modelChoice in modelChoices_lower) {
+    for (k in sspChoices) {
+      for (l in startYearChoices) {
+        f_runsSetup(k, l, modelChoice, runsParms)
+      }
     }
+    # historical
+    k <- "historical"
+    l <- 1991
+    f_runsSetup(k, l, modelChoice, runsParms)
   }
-  # historical
-  k <- "historical"
-  l <- 1991
-  f_runsSetup(k, l, modelChoice, runsParms)
 }
 # gdd sums  ------ this takes forever because it works year by year.
 # scenarios
@@ -146,19 +149,20 @@ for (speciesName in speciesNames) {
   cropVals <- get(paste0("majorCropValues", "_main"))
   for (k in sspChoices) {
     for (l in startYearChoices) {
-      f_gddSum_mean(k, l, speciesNames, modelChoices, hemispheres)
+      for (modelChoice in modelChoices) {
+        f_gddSum_mean(k, l, speciesNames, modelChoice, hemispheres)
+      }
     }
+    # historical -----
+    k <- "historical"
+    l <- 1991
+    f_gddSum_mean(k, l, speciesNames, modelChoice, hemispheres)
   }
-  # historical -----
-  k <- "historical"
-  l <- 1991
-  f_gddSum_mean(k, l, speciesNames, modelChoices, hemispheres)
   
   # ensemble GDD sum -----
   # scenarios
   for (k in sspChoices) {
     for (l in startYearChoices) {
-      yearSpan <- paste0(l, "_", l + yearRange)
       f_ensemble_GDD_sum_mean(k, l, yearRange, speciesNames, cropVals)
     }
   }
@@ -216,11 +220,11 @@ for (hem in hemispheres) {
     print(paste0("Suitability level:  ", suitabilityLevel, ", speciesName: ", speciesName, ", ssp choice: ", k, ", start year: ", l))
     f_suitableLocsGraphics(k, l, speciesName, suitabilityLevel)
     #scenarios
-      for (k in sspChoices) {
-        for (l in startYearChoices) {
-          print(paste0("Suitability level:  ", suitabilityLevel, ", speciesName: ", speciesName, ", ssp choice: ", k, ", start year: ", l))
-          f_suitableLocsGraphics(k, l, speciesName, suitabilityLevel)
-        }
+    for (k in sspChoices) {
+      for (l in startYearChoices) {
+        print(paste0("Suitability level:  ", suitabilityLevel, ", speciesName: ", speciesName, ", ssp choice: ", k, ", start year: ", l))
+        f_suitableLocsGraphics(k, l, speciesName, suitabilityLevel)
       }
+    }
   }
 }

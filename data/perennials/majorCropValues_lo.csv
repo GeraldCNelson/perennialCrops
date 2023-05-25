@@ -1,0 +1,6 @@
+"cropName","cultivar","frost_threshold","low_temp_threshold","summer_heat_threshold","gdd","gddtb","GDD_opt","chill_portions"
+"almond_lo","Achak",-2,-16,45,2750,4.5,25,3.4
+"apple_lo","Eva",-2,-30,35,1450,5,25,12.5
+"cherry_lo","17GE580",-2,-30,35,1100,5,25,18
+"olive_lo","Chemlali",-2,-12,45,1500,10,25,16
+"grape_lo","No_chill",-2,-22,35,1100,10,25,1
